@@ -18,6 +18,8 @@ dist/
 # testing
 /coverage
 docker-compose.test.testenv.yaml
+__pycache__/
+*.py[cod]
 
 # Ignore everything under /pocketbase
 /pocketbase/*

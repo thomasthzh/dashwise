@@ -2,6 +2,7 @@ import { Suspense, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import "./globals.css";
 import config from "@/lib/config";
+import OceanBackground from "@/components/dashboard/OceanBackground";
 
 function formatTitleSegment(segment: string) {
   return segment
@@ -71,25 +72,19 @@ export default function RootLayout() {
   }, [location.pathname]);
 
   return (
-    <Suspense
-      fallback={
-        windowInitialized ? null : (
-          <div
-            style={{
-              minHeight: "100vh",
-              display: "grid",
-              placeItems: "center",
-              color: "rgba(255, 255, 255, 0.72)",
-              background: "#0b1020",
-              fontSize: 14,
-            }}
-          >
-            Loading dashwise...
-          </div>
-        )
-      }
-    >
-      <Outlet />
-    </Suspense>
+    <>
+      <OceanBackground />
+      <Suspense
+        fallback={
+          windowInitialized ? null : (
+            <div className="relative z-10 grid min-h-screen place-items-center text-sm text-white/70">
+              正在连接 126f…
+            </div>
+          )
+        }
+      >
+        <Outlet />
+      </Suspense>
+    </>
   );
 }

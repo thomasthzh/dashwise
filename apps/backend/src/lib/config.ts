@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { resolveDashboardListenHost, resolvePocketBaseListenAddress } from "../features/runtime/network-listeners";
 
 const env = Bun.env;
 
@@ -46,7 +47,9 @@ export const config = {
   ENVIRONMENT: processEnvironment === "dev" ? "dev" : "production",
   USE_LOCAL_FEED_CACHE: useLocalFeedCache,
   PORT: Number(env.PORT) || 3000,
+  HOST: resolveDashboardListenHost(env.HOST),
   PB_URL: getEnv("PB_URL", "NEXT_PUBLIC_PB_URL") || "http://127.0.0.1:8090",
+  PB_LISTEN_ADDRESS: resolvePocketBaseListenAddress(env.PB_LISTEN_ADDRESS),
   PB_BINARY_PATH: env.PB_BINARY_PATH,
   LOG_LEVEL: getLogLevel(),
   START_POCKETBASE:
@@ -76,6 +79,16 @@ export const config = {
   INSTANCE_NAME: getEnv("INSTANCE_NAME", "NEXT_PUBLIC_INSTANCE_NAME") || "Dashwise",
   DISABLE_USER_SIGNUP: truthyEnv(getEnv("DISABLE_USER_SIGNUP", "NEXT_PUBLIC_DISABLE_USER_SIGNUP")),
   ENABLE_SSO: truthyEnv(getEnv("ENABLE_SSO", "NEXT_PUBLIC_ENABLE_SSO")),
+  ADMIN_LOGIN_ALIAS: env.DASHWISE_LOGIN_ALIAS,
+  ADMIN_LOGIN_EMAIL: env.DASHWISE_LOGIN_EMAIL,
+  HOME_SERVER_URLS: {
+    mcsmanager: env.HOME_SERVER_MCSMANAGER_URL,
+    zashboard: env.HOME_SERVER_ZASHBOARD_URL,
+    beszel: env.HOME_SERVER_BESZEL_URL,
+    monitoring: env.HOME_SERVER_MONITORING_URL,
+    hkvps: env.HOME_SERVER_HKVPS_URL,
+    harness: env.HOME_SERVER_HARNESS_URL,
+  },
   JOBS_URL: getEnv("JOBS_URL", "NEXT_PUBLIC_JOBS_URL") || "http://127.0.0.1:3001",
   JOBS_WEBHOOK_URL: env.JOBS_WEBHOOK_URL || "http://jobs:3000/api/forward-notifications",
   JOBS_WEBHOOK_ENABLED: truthyEnv(getEnv("JOBS_WEBHOOK_ENABLE", "NEXT_PUBLIC_JOBS_WEBHOOK_ENABLE")) || !!getEnv("JOBS_URL", "NEXT_PUBLIC_JOBS_URL"),

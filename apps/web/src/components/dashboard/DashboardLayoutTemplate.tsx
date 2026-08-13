@@ -21,6 +21,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import OceanBackgroundSwitcher from "./OceanBackgroundSwitcher";
 
 const COLUMN_ORDER = ["left", "middle", "right"] as const;
 type Column = (typeof COLUMN_ORDER)[number];
@@ -884,17 +885,7 @@ function BottomNavbar({
                         />
                     </button>
                 </li>
-                <li>
-                    <Link
-                        to="/settings/appearance"
-                        className="frosted p-2.5 rounded-full gear-link transition-colors duration-200 aspect-square flex items-center justify-center"
-                    >
-                        <Icon
-                            icon="fa6-solid:gear"
-                            className="gear-rotate text-foreground group-hover:text-primary transition-colors duration-200"
-                        />
-                    </Link>
-                </li>
+                <li><OceanBackgroundSwitcher /></li>
             </ul>
         </div>
         </>

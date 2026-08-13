@@ -7,6 +7,7 @@ import { getAppConfigAction } from '@/lib/apiClient';
 import { loginUserAction, validateAuthTokenAction } from '@/lib/apiClient';
 import useAuth from "@/context/useAuth"
 import { queryKeys } from "@/lib/queryClient";
+import config from "@/lib/config";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -80,9 +81,9 @@ export default function LoginCard() {
   return (
     <Card className="w-full max-w-sm frosted text-foreground backdrop-saturate-90 backdrop-brightness-90">
       <CardHeader>
-        <CardTitle>Welcome back to Dashwise!</CardTitle>
+        <CardTitle>欢迎回到 126f</CardTitle>
         <CardDescription className="text-muted-foreground">
-          Login using your credentials below.
+          使用管理员账号进入服务器控制台。
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -104,11 +105,12 @@ export default function LoginCard() {
           )}
 
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">用户名或邮箱</Label>
             <Input
               id="email"
-              type="email"
-              placeholder="m@example.com"
+              type="text"
+              autoComplete="username"
+              placeholder="管理员账号"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="frosted"
@@ -117,7 +119,7 @@ export default function LoginCard() {
           </div>
           <div className="grid gap-2">
             <div className="flex items-center">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">密码</Label>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
@@ -148,6 +150,7 @@ export default function LoginCard() {
             <Input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="frosted"
@@ -156,14 +159,16 @@ export default function LoginCard() {
           </div>
 
           <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-            {loginMutation.isPending ? "Logging in..." : "Login"}
+            {loginMutation.isPending ? "正在登录…" : "登录"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex-col gap-2">
-        <Button variant="outline" className="w-full frosted">
-                    <Link to="/auth/signup">Sign up instead</Link>
-        </Button>
+        {!config.disableUserSignup && (
+          <Button variant="outline" className="w-full frosted">
+            <Link to="/auth/signup">创建账号</Link>
+          </Button>
+        )}
 
         {(enableSSO === true)  && (
           <Button variant="outline" className="w-full frosted">

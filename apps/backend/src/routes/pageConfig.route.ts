@@ -12,6 +12,9 @@ const FRONTEND_ONLY_WIDGETS = new Set([
   "glanceable-clock",
   "search-bar",
   "link-view",
+  "home-server-activity",
+  "home-server-services",
+  "home-server-host",
 ]);
 
 const FRONTEND_ONLY_GLANCEABLES = new Set([

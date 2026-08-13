@@ -24,6 +24,7 @@ import IframeTemplate from "@dashwise/integrationskit/templates/IFrame";
 import Widget from "@dashwise/integrationskit/Widget";
 import ProgressWidget from "./ProgressWidget";
 import ShortcutsWidget from "./ShortcutsWidget";
+import HomeServerWidget from "./HomeServerWidget";
 import { useLocalization } from "@/context/LocalizationContext";
 import useAuth from "@/context/useAuth";
 import { useActivity } from "@/context/ActivityContext";
@@ -113,6 +114,15 @@ export function renderWidget({
 
     case "shortcuts":
       return <ShortcutsWidget className={finalClassName} shortcutIds={Array.isArray(renderParams?.shortcutIds) ? renderParams.shortcutIds : []} />;
+
+    case "home-server-activity":
+      return <HomeServerWidget variant="activity" className={className} />;
+
+    case "home-server-services":
+      return <HomeServerWidget variant="services" className={className} />;
+
+    case "home-server-host":
+      return <HomeServerWidget variant="host" className={className} />;
 
     case "placeholder":
       return <div className={`${className ?? ""}`} />;

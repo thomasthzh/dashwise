@@ -4,6 +4,7 @@ import type { UsersResponse } from "@dashwise/types";
 
 import speakeasy from "speakeasy";
 import { config } from "../config";
+import { resolveLoginIdentifier } from "../../features/auth/login-identifier";
 
 export class ApiActionError extends Error {
   status: number;
@@ -222,14 +223,18 @@ export async function loginUser(
   const { email, password, totp } = payload;
 
   if (!email || !password) {
-    throw new ApiActionError("Email and password are required", 400, {
-      error: "Email and password are required",
+    throw new ApiActionError("Username or email and password are required", 400, {
+      error: "Username or email and password are required",
     });
   }
 
   const pb = getServerPB();
+  const loginIdentifier = resolveLoginIdentifier(email, {
+    alias: config.ADMIN_LOGIN_ALIAS,
+    email: config.ADMIN_LOGIN_EMAIL,
+  });
   const authData = await pb.collection("users").authWithPassword(
-    email,
+    loginIdentifier,
     password,
   );
   const user = authData.record as AuthUserRecord & { id: string; totpSecret?: string };

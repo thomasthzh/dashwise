@@ -174,7 +174,7 @@ export async function startPocketbase(): Promise<PocketBaseStartResult> {
     [
       pocketBaseBinary,
       "serve",
-      "--http=0.0.0.0:8090",
+      `--http=${config.PB_LISTEN_ADDRESS}`,
       `--dir=${dataDir}`,
       `--migrationsDir=${migrationsDir}`,
     ],

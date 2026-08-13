@@ -18,8 +18,24 @@ import { requireAuth } from "./routes/shared";
 import authRoute from "./routes/auth.route";
 import systemRoute from "./routes/system.route";
 import dataRoute from "./routes/data.route";
+import { createHomeServerRoute } from "./features/home-server/home-server-route";
+import { createHomeServerStatusService } from "./features/home-server/home-server-service";
+import { defaultHomeServerRuntime } from "./features/home-server/home-server-runtime";
+import { collectHomeServerTelemetry } from "./features/home-server/home-server-status";
 
 const app = new Hono();
+const homeServerStatusService = createHomeServerStatusService({
+  collect: () => collectHomeServerTelemetry(defaultHomeServerRuntime),
+  now: () => Date.now(),
+  ttlMs: 8_000,
+  urls: { ...config.HOME_SERVER_URLS },
+});
+const homeServerRoute = createHomeServerRoute({
+  authorize: async (token) => {
+    await requireAuth({ token });
+  },
+  readStatus: () => homeServerStatusService.read(),
+});
 const devAutoLoginEmail = "testenv@dashwise.local";
 const devAutoLoginPassword = "DashwiseTestenv123";
 const assetRoots = {
@@ -66,6 +82,7 @@ app.use("*", cors({ origin: "*" }));
 app.route("/", authRoute);
 app.route("/", systemRoute);
 app.route("/", dataRoute);
+app.route("/", homeServerRoute);
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
@@ -354,6 +371,7 @@ async function servePublicFile(requestPath: string) {
     ".json": "application/json; charset=utf-8",
     ".map": "application/json; charset=utf-8",
     ".mjs": "application/javascript; charset=utf-8",
+    ".mp4": "video/mp4",
     ".png": "image/png",
     ".svg": "image/svg+xml",
     ".ttf": "font/ttf",
@@ -374,6 +392,7 @@ async function servePublicFile(requestPath: string) {
 }
 
 app.get("/assets/*", async (c) => servePublicFile(new URL(c.req.url).pathname));
+app.get("/backgrounds/*", async (c) => servePublicFile(new URL(c.req.url).pathname));
 app.get("/favicons/*", async (c) => servePublicFile(new URL(c.req.url).pathname));
 app.get("/fonts/*", async (c) => servePublicFile(new URL(c.req.url).pathname));
 app.get("/icons/*", async (c) => servePublicFile(new URL(c.req.url).pathname));
@@ -466,13 +485,13 @@ async function printDevAutoLoginUrl() {
 }
 
 Bun.serve({
-  hostname: "0.0.0.0",
+  hostname: config.HOST,
   port,
   fetch: app.fetch,
   websocket,
 });
 
-logger.info(`Running on 0.0.0.0:${port}`);
+logger.info(`Running on ${config.HOST}:${port}`);
 logger.info(`PocketBase target URL: ${config.PB_URL}`);
 void printDevAutoLoginUrl();
 

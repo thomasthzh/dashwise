@@ -137,6 +137,25 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     };
   }, [user, token]);
 
+  const wallpaperFilters = normalizeWallpaperFilters(user?.appearancePreferences?.wallpaperFilters);
+  const blur = wallpaperFilters.blur;
+  const brightness = wallpaperFilters.brightness;
+  const darkModeBrightness = wallpaperFilters.darkModeBrightness;
+  const appliedBrightness = Math.max(
+    0,
+    brightness - Math.max(0, Math.min(50, darkModeBrightness))
+  );
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--ocean-blur", `${Math.max(0, blur)}px`);
+    root.style.setProperty("--ocean-brightness", String(Math.max(.28, Math.min(1, .68 * (appliedBrightness / 100)))));
+    return () => {
+      root.style.removeProperty("--ocean-blur");
+      root.style.removeProperty("--ocean-brightness");
+    };
+  }, [appliedBrightness, blur]);
+
 
   if (!isMounted) {
     return (
@@ -152,24 +171,9 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     return null;
   }
 
-  const wallpaperFilters = normalizeWallpaperFilters(user?.appearancePreferences?.wallpaperFilters);
-  const blur = wallpaperFilters.blur;
-  const brightness = wallpaperFilters.brightness;
-  const darkModeBrightness = wallpaperFilters.darkModeBrightness;
-  const appliedBrightness = Math.max(
-    0,
-    brightness - Math.max(0, Math.min(50, darkModeBrightness))
-  );
-
   return (
     <LocalizationProvider>
-      <div
-        className={cn("min-h-screen overflow-hidden overscroll-none")}
-        style={{
-          backdropFilter: `blur(${blur}px) brightness(${appliedBrightness}%)`,
-          WebkitBackdropFilter: `blur(${blur}px) brightness(${appliedBrightness}%)`,
-        }}
-      >
+      <div className={cn("min-h-screen overflow-hidden overscroll-none")}>
         <ActivityProvider>
           <SearchBar
             useRedirect={false}

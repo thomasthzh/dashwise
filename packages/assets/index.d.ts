@@ -2,8 +2,8 @@ export declare const defaultHomeConfig: {
     template: string;
     columns: {
         left: {
-            placeholder: {
-                height: string;
+            "home-server-activity": {
+                index: number;
             };
         };
         middle: {
@@ -17,13 +17,13 @@ export declare const defaultHomeConfig: {
             "search-bar": {
                 index: number;
             };
-            "link-view": {
+            "home-server-services": {
                 index: number;
             };
         };
         right: {
-            placeholder: {
-                height: string;
+            "home-server-host": {
+                index: number;
             };
         };
     };
