@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 
 token_file=/etc/beszel-126f/agent-token
+key_file=/etc/beszel-126f/agent-key
+hub_private_key=/var/lib/beszel-126f/beszel_data/id_ed25519
 hub_url=http://127.0.0.1:8091
 admin_email=thzh@126f.invalid
 
@@ -10,14 +12,30 @@ if [[ ${EUID} -ne 0 ]]; then
   exit 1
 fi
 [[ -s ${token_file} ]] || { printf 'ERROR: missing %s\n' "${token_file}" >&2; exit 1; }
+[[ -s ${hub_private_key} ]] || { printf 'ERROR: missing %s\n' "${hub_private_key}" >&2; exit 1; }
 systemctl is-active --quiet beszel-126f.service \
   || { printf '%s\n' 'ERROR: Beszel hub is not active' >&2; exit 1; }
 
 beszel_password=
+key_stage=
 cleanup() {
   beszel_password=
+  if [[ -n ${key_stage} && -f ${key_stage} ]]; then
+    case ${key_stage} in
+      /etc/beszel-126f/agent-key.*) rm -f -- "${key_stage}" ;;
+    esac
+  fi
 }
 trap cleanup EXIT
+
+key_stage=$(mktemp /etc/beszel-126f/agent-key.XXXXXX)
+ssh-keygen -y -f "${hub_private_key}" >"${key_stage}"
+grep -Eq '^ssh-ed25519 ' "${key_stage}" \
+  || { printf '%s\n' 'ERROR: Beszel hub public key is invalid' >&2; exit 1; }
+install -m 0640 -o root -g beszel "${key_stage}" "${key_file}"
+rm -f -- "${key_stage}"
+key_stage=
+
 read -r -s -p 'Beszel password: ' beszel_password </dev/tty
 printf '\n' >/dev/tty
 if (( ${#beszel_password} < 8 )); then
@@ -82,5 +100,6 @@ if token_status != 200 or result.get("active") is not True or result.get("perman
 
 beszel_password=
 systemctl restart beszel-agent-126f.service
+sleep 2
 systemctl is-active --quiet beszel-agent-126f.service
-printf 'Beszel administrator %s is initialized and the local agent token is active.\n' "${admin_email%%@*}"
+printf 'Beszel administrator %s is initialized and the local agent credentials are active.\n' "${admin_email%%@*}"

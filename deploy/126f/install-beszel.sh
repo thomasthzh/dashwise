@@ -12,6 +12,8 @@ agent_root=/opt/beszel-agent-126f
 agent_binary=${agent_root}/beszel-agent-${beszel_version}
 config_root=/etc/beszel-126f
 token_file=${config_root}/agent-token
+key_file=${config_root}/agent-key
+hub_private_key=/var/lib/beszel-126f/beszel_data/id_ed25519
 hub_service=/etc/systemd/system/beszel-126f.service
 agent_service=/etc/systemd/system/beszel-agent-126f.service
 
@@ -112,6 +114,7 @@ Group=beszel
 WorkingDirectory=/var/lib/beszel-agent-126f
 Environment=LISTEN=127.0.0.1:45876
 Environment=HUB_URL=http://127.0.0.1:8091
+Environment=KEY_FILE=/etc/beszel-126f/agent-key
 Environment=TOKEN_FILE=/etc/beszel-126f/agent-token
 Environment=DISABLE_SSH=true
 Environment=DOCKER_HOST=
@@ -130,7 +133,7 @@ ProtectKernelLogs=true
 ProtectKernelModules=true
 ProtectKernelTunables=true
 ProtectSystem=strict
-ReadOnlyPaths=/etc/beszel-126f/agent-token
+ReadOnlyPaths=/etc/beszel-126f/agent-key /etc/beszel-126f/agent-token
 ReadWritePaths=/var/lib/beszel-agent-126f
 RemoveIPC=true
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
@@ -156,6 +159,13 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 [[ ${healthy} == true ]] || { printf '%s\n' 'ERROR: Beszel hub failed health verification' >&2; exit 1; }
+
+[[ -s ${hub_private_key} ]] || { printf 'ERROR: missing Beszel hub key: %s\n' "${hub_private_key}" >&2; exit 1; }
+key_stage=${staging_root}/agent-key
+ssh-keygen -y -f "${hub_private_key}" >"${key_stage}"
+grep -Eq '^ssh-ed25519 ' "${key_stage}" \
+  || { printf '%s\n' 'ERROR: Beszel hub public key is invalid' >&2; exit 1; }
+install -m 0640 -o root -g beszel "${key_stage}" "${key_file}"
 
 systemctl enable --now beszel-agent-126f.service
 systemctl is-active --quiet beszel-126f.service

@@ -9,7 +9,9 @@ test("installs the pinned hkvps agent without granting Docker-root access", () =
   expect(source).toContain("sha256sum -c -");
   expect(source).toContain("User=beszel");
   expect(source).toContain("HUB_URL=http://100.80.188.111:8091");
+  expect(source).toContain("KEY_FILE=/etc/beszel-agent-hkvps/key");
   expect(source).toContain("TOKEN_FILE=/etc/beszel-agent-hkvps/token");
+  expect(source).toContain('rm -f -- "${transfer_file}"');
   expect(source).toContain("DISABLE_SSH=true");
   expect(source).toContain("DOCKER_HOST=");
   expect(source).not.toContain("docker group");

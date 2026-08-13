@@ -138,7 +138,7 @@ const hkvpsCardDefinitions: Array<{
   { id: "hkvps-netwatch", probe: "netwatch", name: "Netwatch", icon: "fa6-solid:wave-square", onlineMetric: "Dashboard online", detail: "Network watch · :29876" },
   { id: "hkvps-service-hub", probe: "serviceHub", name: "Service Hub", icon: "fa6-solid:layer-group", onlineMetric: "Hub online", detail: "Launcher · :3000" },
   { id: "hkvps-weiqi", probe: "weiqi", name: "Weiqi Battle", icon: "fa6-solid:chess-board", onlineMetric: "Game online", detail: "Realtime server · :8000" },
-  { id: "hkvps-syncaction", probe: "syncaction", name: "SyncAction", icon: "fa6-solid:arrows-rotate", onlineMetric: "Endpoints online", detail: "Public + Admin · 3 containers" },
+  { id: "hkvps-syncaction", probe: "syncaction", name: "SyncAction", icon: "fa6-solid:arrows-rotate", onlineMetric: "Endpoints online", detail: "Public + Admin endpoints" },
   { id: "hkvps-netdata", probe: "netdata", name: "Netdata", icon: "simple-icons:netdata", onlineMetric: "Metrics online", detail: "Detailed telemetry · :19999" },
   { id: "hkvps-edge", probe: "edge", name: "hkvps Edge", icon: "fa6-solid:cloud", onlineMetric: "Edge online", detail: "Caddy · Cloudflare · Xray" },
 ];

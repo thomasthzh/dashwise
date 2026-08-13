@@ -110,7 +110,7 @@ describe("126f home server status", () => {
       origin: "hkvps",
       state: "online",
       metric: "2 / 2 endpoints",
-      detail: "Public + Admin · 3 containers",
+      detail: "Public + Admin endpoints",
     });
     expect(snapshot.host).toMatchObject({
       hostname: "ZHOU12600kf",

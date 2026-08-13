@@ -13,6 +13,7 @@ test("installs a pinned Beszel hub and local agent with verified assets", () => 
   expect(source).toContain("LISTEN=127.0.0.1:45876");
   expect(source).toContain("HUB_URL=http://127.0.0.1:8091");
   expect(source).toContain("DISABLE_SSH=true");
+  expect(source).toContain("KEY_FILE=/etc/beszel-126f/agent-key");
   expect(source).toContain("TOKEN_FILE=/etc/beszel-126f/agent-token");
   expect(source).not.toMatch(/(?:user_password|agent_token)=["'][^"']+["']/i);
 });
