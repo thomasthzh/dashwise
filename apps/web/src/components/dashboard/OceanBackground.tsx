@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   resolveOceanBackground,
+  shouldPlayOceanVideo,
   type OceanBackgroundKey,
 } from "@/lib/homeServerPresentation";
 
@@ -48,17 +49,19 @@ export default function OceanBackground() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) {
-      video.pause();
-      return;
-    }
 
     const play = () => void video.play().catch(() => undefined);
-    const onVisibility = () => document.hidden ? video.pause() : play();
-    play();
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
+    const syncPlayback = () => {
+      const shouldPlay = shouldPlayOceanVideo({
+        pageVisible: !document.hidden,
+        prefersReducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      });
+      if (shouldPlay) play();
+      else video.pause();
+    };
+    syncPlayback();
+    document.addEventListener("visibilitychange", syncPlayback);
+    return () => document.removeEventListener("visibilitychange", syncPlayback);
   }, [source]);
 
   return (

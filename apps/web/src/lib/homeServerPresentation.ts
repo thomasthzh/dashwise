@@ -7,6 +7,15 @@ export function resolveOceanBackground(saved: string | null): OceanBackgroundKey
   return normalized && OCEAN_BACKGROUND_KEYS.has(normalized) ? normalized : "b";
 }
 
+export function shouldPlayOceanVideo({
+  pageVisible,
+}: {
+  pageVisible: boolean;
+  prefersReducedMotion: boolean;
+}) {
+  return pageVisible;
+}
+
 export function formatBinaryBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
   const units = ["B", "KiB", "MiB", "GiB", "TiB"];
