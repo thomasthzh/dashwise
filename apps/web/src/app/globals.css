@@ -479,7 +479,6 @@ a.home-service-card:active {
   color: rgb(255 255 255 / 54%);
   font-size: .55rem;
   font-style: normal;
-  letter-spacing: .03em;
 }
 
 .home-live-pill i {
@@ -489,6 +488,9 @@ a.home-service-card:active {
   background: #53f1ad;
   box-shadow: 0 0 8px rgb(83 241 173 / 80%);
 }
+
+.home-live-pill.is-stale { color: #ffd166; }
+.home-live-pill.is-stale i { background: currentColor; box-shadow: 0 0 8px rgb(255 209 102 / 70%); }
 
 .home-side-stack {
   display: grid;
@@ -583,8 +585,12 @@ a.home-service-card:active {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #53f1ad;
+  background: #8a9aa6;
 }
+
+.home-access-card i.is-online { background: #53f1ad; }
+.home-access-card i.is-degraded { background: #ffd166; }
+.home-access-card i.is-offline { background: #ff6b7a; }
 
 .home-host-card { padding: 13px; }
 .home-host-card header > span:first-child strong,

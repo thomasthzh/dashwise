@@ -4,6 +4,7 @@ import {
   buildHomeServerSnapshot,
   collectHomeServerTelemetry,
   parseTailscaleStatus,
+  toPublicHomeServerSnapshot,
   type HomeServerTelemetry,
 } from "./home-server-status";
 
@@ -131,6 +132,41 @@ describe("126f home server status", () => {
       metric: "Web online",
       detail: "Daemon offline",
     });
+  });
+
+  test("publishes live status without management addresses or links", () => {
+    const snapshot = buildHomeServerSnapshot(telemetry, {
+      mcsmanager: "http://100.80.188.111:23333",
+      zashboard: "http://100.80.188.111:60127",
+      beszel: "http://100.80.188.111:8091",
+      harness: "https://zhou12600kf.example.ts.net/",
+    });
+    (snapshot.host as typeof snapshot.host & { privateAddress: string }).privateAddress = "10.23.118.126";
+    (snapshot.services[0] as typeof snapshot.services[number] & { adminUrl: string }).adminUrl = "https://admin.example.invalid";
+
+    const publicSnapshot = toPublicHomeServerSnapshot(snapshot);
+    const serializedServices = JSON.stringify(publicSnapshot.services);
+
+    expect(publicSnapshot.services).toHaveLength(snapshot.services.length);
+    expect(publicSnapshot.services.every((service) => !("href" in service))).toBe(true);
+    expect(publicSnapshot.services.find((service) => service.id === "minecraft")).toMatchObject({
+      state: "online",
+      metric: "3 / 20",
+      detail: "游戏服务",
+    });
+    expect(publicSnapshot.services.find((service) => service.id === "tailscale")?.detail).toBe("私有组网");
+    expect(publicSnapshot.host).toMatchObject({ hostname: "126f", cpuPercent: 18.4, memoryPercent: 42.7, diskPercent: 1.4 });
+    expect(JSON.stringify(publicSnapshot)).not.toContain("ZHOU12600kf");
+    expect(JSON.stringify(publicSnapshot)).not.toContain("10.23.118.126");
+    expect(JSON.stringify(publicSnapshot)).not.toContain("admin.example.invalid");
+    expect(publicSnapshot.services.find((service) => service.id === "remote-host")?.name).toBe("远端服务器");
+    expect(JSON.stringify(publicSnapshot)).not.toContain("hkvps");
+    expect(serializedServices).not.toContain("100.80.188.111");
+    expect(serializedServices).not.toContain("fd7a:115c:a1e0");
+    expect(serializedServices).not.toContain("example.ts.net");
+    expect(serializedServices).not.toMatch(/:\d{2,5}/);
+    expect(serializedServices).not.toContain("http://");
+    expect(serializedServices).not.toContain("https://");
   });
 
   test("parses Tailscale peers and distinguishes direct from relay paths", () => {

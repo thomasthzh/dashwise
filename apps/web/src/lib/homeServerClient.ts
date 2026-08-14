@@ -4,7 +4,7 @@ export type HomeServerServiceState = "online" | "degraded" | "offline" | "unknow
 
 export type HomeServerService = {
   id: string;
-  origin: "126f" | "hkvps";
+  origin: "126f" | "hkvps" | "remote";
   name: string;
   icon: string;
   state: HomeServerServiceState;
@@ -30,6 +30,10 @@ export type HomeServerSnapshot = {
   services: HomeServerService[];
 };
 
+export function shouldUsePrivateHomeServerStatus(token: string | null, readOnly = false) {
+  return Boolean(token) && !readOnly;
+}
+
 export async function fetchHomeServerStatus(
   auth: ActionAuth,
   options?: {
@@ -42,6 +46,22 @@ export async function fetchHomeServerStatus(
   const fetchImpl = options?.fetch || fetch;
   const response = await fetchImpl(new URL("/api/v1/home-server/status", baseUrl), {
     headers: { Authorization: `Bearer ${auth.token}` },
+  });
+  const payload = await response.json() as HomeServerSnapshot | { error?: string };
+  if (!response.ok) {
+    throw new Error("error" in payload && payload.error ? payload.error : "Status collection failed");
+  }
+  return payload as HomeServerSnapshot;
+}
+
+export async function fetchPublicHomeServerStatus(options?: {
+  baseUrl?: string;
+  fetch?: typeof fetch;
+}): Promise<HomeServerSnapshot> {
+  const baseUrl = options?.baseUrl || (typeof window === "undefined" ? "http://127.0.0.1" : window.location.origin);
+  const fetchImpl = options?.fetch || fetch;
+  const response = await fetchImpl(new URL("/api/v1/home-server/public-status", baseUrl), {
+    credentials: "omit",
   });
   const payload = await response.json() as HomeServerSnapshot | { error?: string };
   if (!response.ok) {

@@ -40,7 +40,7 @@ function socketUrl(token: string) {
   return url.toString();
 }
 
-export function ActivityProvider({ children }: { children: ReactNode }) {
+export function ActivityProvider({ children, disabled = false }: { children: ReactNode; disabled?: boolean }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
   const socket = useRef<WebSocket | null>(null);
@@ -49,7 +49,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const [calendarEvents, setCalendarEvents] = useState<ActivityCalendarEvent[]>([]);
 
   useEffect(() => {
-    if (!token) {
+    if (disabled || !token) {
       setNotifications([]);
       setCalendarEvents([]);
       queryClient.removeQueries({ queryKey: ["api", token, ...queryKeys.notifications.items(null)] });
@@ -85,7 +85,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       socket.current?.close();
       socket.current = null;
     };
-  }, [queryClient, token]);
+  }, [disabled, queryClient, token]);
 
   const refresh = () => {
     if (socket.current?.readyState === WebSocket.OPEN) {

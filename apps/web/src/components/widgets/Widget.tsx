@@ -43,6 +43,7 @@ export type WidgetProps = {
   isPreview?: boolean;
   previewTemplate?: string;
   defaultOpen?: boolean;
+  readOnly?: boolean;
 };
 
 // Kept for compatibility with existing widget item components.
@@ -62,6 +63,7 @@ export function renderWidget({
   className,
   isPreview,
   defaultOpen,
+  readOnly,
 }: WidgetProps): ReactNode {
   const renderParams = stripWidgetIndex(params);
   const resolvedType = type === "widget" && typeof renderParams?.key === "string" && renderParams.key.trim()
@@ -73,10 +75,10 @@ export function renderWidget({
   switch (resolvedType) {
     case "main-clock":
     case "glanceable-clock":
-      return <GlanceableClockWidget className={className} params={renderParams} isPreview={isPreview} />;
+      return <GlanceableClockWidget className={className} params={renderParams} isPreview={isPreview} readOnly={readOnly} />;
 
     case "search-bar":
-      return <SearchBar useRedirect={false} defaultOpen={defaultOpen} />;
+      return <SearchBar useRedirect={false} defaultOpen={defaultOpen} disabled={readOnly} />;
 
     case "calendar-today":
       return <CalendarTodayWidget className={finalClassName} {...renderParams} />;
@@ -116,13 +118,13 @@ export function renderWidget({
       return <ShortcutsWidget className={finalClassName} shortcutIds={Array.isArray(renderParams?.shortcutIds) ? renderParams.shortcutIds : []} />;
 
     case "home-server-activity":
-      return <HomeServerWidget variant="activity" className={className} />;
+      return <HomeServerWidget variant="activity" className={className} readOnly={readOnly} />;
 
     case "home-server-services":
-      return <HomeServerWidget variant="services" className={className} />;
+      return <HomeServerWidget variant="services" className={className} readOnly={readOnly} />;
 
     case "home-server-host":
-      return <HomeServerWidget variant="host" className={className} />;
+      return <HomeServerWidget variant="host" className={className} readOnly={readOnly} />;
 
     case "placeholder":
       return <div className={`${className ?? ""}`} />;

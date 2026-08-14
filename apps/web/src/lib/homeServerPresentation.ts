@@ -24,3 +24,30 @@ export function formatBinaryBytes(bytes: number) {
   const digits = value >= 100 || exponent === 0 ? 0 : 1;
   return `${value.toFixed(digits)} ${units[exponent]}`;
 }
+
+type RealtimeState = "online" | "degraded" | "offline" | "unknown";
+
+export function resolveHomeAccessStates(services: Array<{ id: string; state: RealtimeState }>) {
+  const stateFor = (id: string): RealtimeState => services.find((service) => service.id === id)?.state ?? "unknown";
+
+  return {
+    tailscale: stateFor("tailscale"),
+    ipv6: "unknown" as const,
+    nps: stateFor("nps"),
+  };
+}
+
+export function resolveTelemetryFreshness({
+  hasData,
+  isError,
+}: {
+  hasData: boolean;
+  isError: boolean;
+}) {
+  if (!hasData) return "unavailable" as const;
+  return isError ? "stale" as const : "live" as const;
+}
+
+export function resolveHomeServerCardHref(href: string | undefined, readOnly = false) {
+  return readOnly ? undefined : href;
+}

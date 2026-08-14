@@ -97,6 +97,18 @@ export type HomeServerSnapshot = {
   services: HomeServerService[];
 };
 
+export type PublicHomeServerService = Pick<HomeServerService, "icon" | "state" | "metric" | "detail"> & {
+  id: string;
+  origin: "126f" | "remote";
+  name: string;
+};
+
+export type PublicHomeServerSnapshot = {
+  generatedAt: string;
+  host: HomeServerSnapshot["host"];
+  services: PublicHomeServerService[];
+};
+
 export type HomeServerService = {
   id:
     | "mcsmanager"
@@ -317,6 +329,69 @@ export function buildHomeServerSnapshot(
         href: optionalUrl(urls, "harness"),
       },
     ],
+  };
+}
+
+export function toPublicHomeServerSnapshot(snapshot: HomeServerSnapshot): PublicHomeServerSnapshot {
+  const details: Record<HomeServerService["id"], string> = {
+    mcsmanager: "服务器控制",
+    minecraft: "游戏服务",
+    zashboard: "网络控制器",
+    beszel: "双主机监控",
+    monitoring: "主机遥测",
+    tailscale: "私有组网",
+    nps: "公网中继",
+    hkvps: "远端主机遥测",
+    "hkvps-adguard": "DNS 服务",
+    "hkvps-moonlight": "内容发布",
+    "hkvps-netwatch": "网络观察",
+    "hkvps-service-hub": "服务入口",
+    "hkvps-weiqi": "实时游戏",
+    "hkvps-syncaction": "端点健康",
+    "hkvps-netdata": "详细遥测",
+    "hkvps-edge": "边缘服务",
+    harness: "私有工作区",
+  };
+  const identities: Partial<Record<HomeServerService["id"], { id: string; name: string }>> = {
+    hkvps: { id: "remote-host", name: "远端服务器" },
+    "hkvps-adguard": { id: "remote-adguard", name: "AdGuard Home" },
+    "hkvps-moonlight": { id: "remote-moonlight", name: "Moonlight Blog" },
+    "hkvps-netwatch": { id: "remote-netwatch", name: "Netwatch" },
+    "hkvps-service-hub": { id: "remote-service-hub", name: "Service Hub" },
+    "hkvps-weiqi": { id: "remote-weiqi", name: "Weiqi Battle" },
+    "hkvps-syncaction": { id: "remote-syncaction", name: "SyncAction" },
+    "hkvps-netdata": { id: "remote-netdata", name: "Netdata" },
+    "hkvps-edge": { id: "remote-edge", name: "边缘服务" },
+  };
+
+  const host = snapshot.host;
+
+  return {
+    generatedAt: snapshot.generatedAt,
+    host: {
+      hostname: "126f",
+      uptimeSeconds: host.uptimeSeconds,
+      cpuPercent: host.cpuPercent,
+      memoryUsedBytes: host.memoryUsedBytes,
+      memoryTotalBytes: host.memoryTotalBytes,
+      diskUsedBytes: host.diskUsedBytes,
+      diskTotalBytes: host.diskTotalBytes,
+      load1: host.load1,
+      memoryPercent: host.memoryPercent,
+      diskPercent: host.diskPercent,
+    },
+    services: snapshot.services.map((service) => {
+      const identity = identities[service.id];
+      return {
+        id: identity?.id ?? service.id,
+        origin: service.origin === "hkvps" ? "remote" : "126f",
+        name: identity?.name ?? service.name,
+        icon: service.icon,
+        state: service.state,
+        metric: service.metric,
+        detail: details[service.id],
+      };
+    }),
   };
 }
 

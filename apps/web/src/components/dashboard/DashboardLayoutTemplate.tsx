@@ -11,6 +11,7 @@ import QuickLaunchPopover from "./QuickLaunchPopover";
 import useAuth from "@/context/useAuth";
 import { useActivity } from "@/context/ActivityContext";
 import { getPageIntegrationDataAction } from '@/lib/apiClient';
+import { shouldPollPageIntegrations } from "@/lib/publicInteractionAccess";
 import { renderWidget } from "../widgets/Widget";
 import PageNotFound from "../errorPages/PageNotFound";
 import { primePageIntegrationConsumerCache } from "@/lib/pageIntegrationDataCache";
@@ -84,10 +85,12 @@ export default function DashboardLayoutTemplate({
     config,
     pageName,
     isLoading = false,
+    readOnly = false,
 }: {
     config: Record<string, any> | null;
     pageName?: string;
     isLoading?: boolean;
+    readOnly?: boolean;
 }) {
     const [searchParams] = useSearchParams();
     const { token, withAuth } = useAuth();
@@ -132,6 +135,7 @@ export default function DashboardLayoutTemplate({
     }, [pageName, withAuth]);
 
     useEffect(() => {
+        if (!shouldPollPageIntegrations(token, readOnly)) return;
         let cancelled = false;
 
         const primeIntegrationData = async () => {
@@ -163,8 +167,7 @@ export default function DashboardLayoutTemplate({
             }, POLL_INTERVAL_MS);
         };
 
-        // Start polling if we have a token (otherwise polling is a no-op)
-        if (token) startPolling();
+        startPolling();
 
         return () => {
             cancelled = true;
@@ -173,7 +176,7 @@ export default function DashboardLayoutTemplate({
                 intervalId = null;
             }
         };
-    }, [refreshPageIntegrationData, token]);
+    }, [readOnly, refreshPageIntegrationData, token]);
 
     // Scroll to center panel on mobile first render
     useEffect(() => {
@@ -456,7 +459,7 @@ export default function DashboardLayoutTemplate({
                 <div key={state.refreshVersion} className={state.size === "auto" ? undefined : "h-full"}>
                     {children}
                 </div>
-                {showMenu && (
+                {showMenu && !readOnly && (
                     <div className="absolute right-2 top-2 z-30 opacity-0 transition-opacity group-hover/widget-menu:opacity-100 focus-within:opacity-100">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -545,6 +548,7 @@ export default function DashboardLayoutTemplate({
                             type: "main-clock",
                             params: cfg,
                             className: "w-full",
+                            readOnly,
                         }),
                     })
                 );
@@ -558,6 +562,7 @@ export default function DashboardLayoutTemplate({
                         children: renderWidget({
                             type: "search-bar",
                             defaultOpen: openFromURL ?? false,
+                            readOnly,
                         }),
                     })
                 );
@@ -585,6 +590,7 @@ export default function DashboardLayoutTemplate({
                             : undefined,
                         params: cfg,
                         className: wrapperClass,
+                        readOnly,
                     }),
                 });
         }
@@ -697,10 +703,14 @@ export default function DashboardLayoutTemplate({
                     {COLUMN_ORDER.map(renderColumn)}
                 </main>
 
-                <BottomNavbar
-                    activePanel={activePanel}
-                    columns={columns}
-                />
+                {readOnly
+                    ? <PublicBottomNavbar />
+                    : (
+                        <BottomNavbar
+                            activePanel={activePanel}
+                            columns={columns}
+                        />
+                    )}
             </div>
             {!isLoading && openFromURL && !hasSearchBarWidget && (
                 <div className="hidden">
@@ -711,6 +721,28 @@ export default function DashboardLayoutTemplate({
                 </div>
             )}
         </>
+    );
+}
+
+function PublicBottomNavbar() {
+    return (
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center md:px-0 mb-2" id="page-footer">
+            <div id="app-details" className="flex items-center gap-2">
+                <img src="/dashwise-icon.png" alt="" className="h-9" />
+                <span className="hidden md:flex font-semibold">126f</span>
+                <span className="hidden md:inline-flex frosted rounded-full px-2.5 py-1 text-xs text-(--text-on-frosted)">公开只读</span>
+            </div>
+            <div className="frosted rounded-full px-3 py-1 text-xs text-(--text-on-frosted)">实时状态</div>
+            <div className="flex justify-end">
+                <Link
+                    to="/auth/login"
+                    className="frosted rounded-full px-3 py-2 text-sm text-(--surface-foreground) transition-colors hover:bg-(--surface-hover)"
+                >
+                    <Icon icon="fa6-solid:lock" className="mr-2" />
+                    管理员登录
+                </Link>
+            </div>
+        </div>
     );
 }
 

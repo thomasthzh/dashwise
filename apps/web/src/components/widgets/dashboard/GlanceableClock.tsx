@@ -14,6 +14,7 @@ import { useActivity } from "@/context/ActivityContext";
 import { Bell, CalendarDays } from "lucide-react";
 import { readPageIntegrationConsumer } from "@/lib/pageIntegrationDataCache";
 import type { ClockAppearance } from "../../settings/ClockFontSelectionCarousel";
+import { shouldUseBackendGlanceable, shouldUseProtectedGlanceableCache } from "@/lib/glanceableAccess";
 
 type ResolvedGlanceablePayload = {
   consumer: "glanceable";
@@ -29,24 +30,12 @@ const glanceableConsumerCache = new Map<string, ResolvedGlanceablePayload | null
 const DEFAULT_CAROUSEL_INTERVAL_SECONDS = 5;
 const CAROUSEL_FADE_DURATION_MS = 250;
 type LocalizationFormatters = Pick<ReturnType<typeof useLocalization>, "formatTemperature" | "formatTime" | "formatDate">;
-const LOCAL_ONLY_GLANCEABLES = new Set([
-  "date",
-  "greeting",
-  "local-timezone",
-  "world-clock",
-  "progress",
-  "day-progress",
-  "week-progress",
-  "month-progress",
-  "year-progress",
-  "latest-activities",
-]);
-
 type GlanceableClockWidgetProps = WidgetItemProps & {
   isPreview?: boolean;
+  readOnly?: boolean;
 };
 
-export default function GlanceableClockWidget({ className, params, isPreview }: GlanceableClockWidgetProps) {
+export default function GlanceableClockWidget({ className, params, isPreview, readOnly }: GlanceableClockWidgetProps) {
   const { pageConfig } = usePageConfig();
   const { user } = useAuth();
   const localization = useLocalization();
@@ -112,6 +101,7 @@ export default function GlanceableClockWidget({ className, params, isPreview }: 
           items={slots?.left ?? (glanceableKeys[0] ? [{ type: glanceableKeys[0], params: getParams(glanceableKeys[0]) }] : [])}
           intervalSeconds={getCarouselInterval(carouselIntervals?.left)}
           formatters={localization}
+          readOnly={readOnly}
         />
       </div>
       <div style={{ gridArea: "gl2" }} className="area-gl2 min-w-0 overflow-hidden">
@@ -119,6 +109,7 @@ export default function GlanceableClockWidget({ className, params, isPreview }: 
           items={slots?.right ?? (glanceableKeys[1] ? [{ type: glanceableKeys[1], params: getParams(glanceableKeys[1]) }] : [])}
           intervalSeconds={getCarouselInterval(carouselIntervals?.right)}
           formatters={localization}
+          readOnly={readOnly}
         />
       </div>
     </section>
@@ -129,10 +120,12 @@ function GlanceableCarousel({
   items,
   intervalSeconds,
   formatters,
+  readOnly,
 }: {
   items: Array<{ type: string; params?: Record<string, any> }>;
   intervalSeconds: number;
   formatters: LocalizationFormatters;
+  readOnly?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
@@ -164,7 +157,7 @@ function GlanceableCarousel({
       className={`min-w-0 transition-opacity ease-out ${isFading ? "opacity-30" : "opacity-100"}`}
       style={{ transitionDuration: `${CAROUSEL_FADE_DURATION_MS}ms` }}
     >
-      <ResolvedGlanceable type={item.type} params={item.params} formatters={formatters} className="font-medium" />
+      <ResolvedGlanceable type={item.type} params={item.params} formatters={formatters} className="font-medium" readOnly={readOnly} />
     </div>
   ) : null;
 }
@@ -179,22 +172,27 @@ function ResolvedGlanceable({
   params,
   className,
   formatters,
+  readOnly,
 }: {
   type: string;
   params?: Record<string, any>;
   className?: string;
   formatters?: LocalizationFormatters;
+  readOnly?: boolean;
 }) {
   const { unreadCount, calendarEvents } = useActivity();
   const { withAuth } = useAuth();
   const [backendPayload, setBackendPayload] = useState<ResolvedGlanceablePayload | null>(null);
   const [loading, setLoading] = useState(false);
   const cacheKey = `${type}:${stableStringify(params ?? {})}`;
-  const preloaded = readPageIntegrationConsumer("glanceable", type, params);
-  const resolved = preloaded?.consumer === "glanceable"
-    ? (glanceableConsumerCache.set(cacheKey, preloaded as ResolvedGlanceablePayload), preloaded as ResolvedGlanceablePayload)
-    : backendPayload ?? glanceableConsumerCache.get(cacheKey);
-  const shouldUseBackend = !LOCAL_ONLY_GLANCEABLES.has(type) && type !== "latest-activities";
+  const canUseProtectedCache = shouldUseProtectedGlanceableCache(readOnly);
+  const preloaded = canUseProtectedCache ? readPageIntegrationConsumer("glanceable", type, params) : undefined;
+  const resolved = canUseProtectedCache
+    ? preloaded?.consumer === "glanceable"
+      ? (glanceableConsumerCache.set(cacheKey, preloaded as ResolvedGlanceablePayload), preloaded as ResolvedGlanceablePayload)
+      : backendPayload ?? glanceableConsumerCache.get(cacheKey)
+    : undefined;
+  const shouldUseBackend = shouldUseBackendGlanceable(type, readOnly);
   const blueprint = resolved?.blueprint;
   const hasBackendBlueprint = Boolean(blueprint?.text || blueprint?.icon || blueprint?.glanceableJSON);
 
