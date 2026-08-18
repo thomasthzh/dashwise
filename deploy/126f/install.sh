@@ -168,6 +168,8 @@ if [[ ! -f ${config_file} ]]; then
       'HOME_SERVER_ZASHBOARD_URL=http://100.80.188.111:60127' \
       'HOME_SERVER_BESZEL_URL=http://100.80.188.111:8091' \
       'HOME_SERVER_HARNESS_URL=https://zhou12600kf.tailb8f499.ts.net/' \
+      'HOME_SERVER_NETALERTX_URL=https://zhou12600kf.tailb8f499.ts.net:20211/' \
+      'HOME_SERVER_ROUTER_URL=https://zhou12600kf.tailb8f499.ts.net:12443/' \
       'LOG_LEVEL=info'
   } >"${env_stage}"
   install -m 0640 -o root -g dashwise "${env_stage}" "${config_file}"

@@ -88,6 +88,8 @@ export const config = {
     monitoring: env.HOME_SERVER_MONITORING_URL,
     hkvps: env.HOME_SERVER_HKVPS_URL,
     harness: env.HOME_SERVER_HARNESS_URL,
+    netalertx: env.HOME_SERVER_NETALERTX_URL,
+    router: env.HOME_SERVER_ROUTER_URL,
   },
   JOBS_URL: getEnv("JOBS_URL", "NEXT_PUBLIC_JOBS_URL") || "http://127.0.0.1:3001",
   JOBS_WEBHOOK_URL: env.JOBS_WEBHOOK_URL || "http://jobs:3000/api/forward-notifications",

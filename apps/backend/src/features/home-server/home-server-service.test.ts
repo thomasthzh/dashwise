@@ -25,7 +25,9 @@ test("home server status service reuses a fresh sample and refreshes expired dat
       npc: true,
       beszel: true,
       harness: true,
+      router: true,
     },
+    netalertx: { available: true, onlineDevices: 11, totalDevices: 15 },
     minecraft: { online: true },
     tailscale: {
       online: true,

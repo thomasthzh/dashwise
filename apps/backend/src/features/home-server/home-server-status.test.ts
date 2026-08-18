@@ -27,7 +27,9 @@ const telemetry: HomeServerTelemetry = {
     npc: true,
     beszel: true,
     harness: true,
+    router: true,
   },
+  netalertx: { available: true, onlineDevices: 11, totalDevices: 15 },
   minecraft: {
     online: true,
     playersOnline: 3,
@@ -75,6 +77,8 @@ describe("126f home server status", () => {
       zashboard: "http://100.80.188.111:60127",
       beszel: "http://100.80.188.111:8091",
       harness: "https://zhou12600kf.example.ts.net/",
+      netalertx: "https://zhou12600kf.example.ts.net:20211/",
+      router: "https://zhou12600kf.example.ts.net:12443/",
     });
 
     expect(snapshot.services.map((service) => service.id)).toEqual([
@@ -83,6 +87,8 @@ describe("126f home server status", () => {
       "zashboard",
       "beszel",
       "monitoring",
+      "netalertx",
+      "router",
       "tailscale",
       "nps",
       "hkvps",
@@ -102,6 +108,16 @@ describe("126f home server status", () => {
       detail: "NeoForge 1.21.1 · 2 ms",
     });
     expect(snapshot.services.find((service) => service.id === "mcsmanager")?.state).toBe("online");
+    expect(snapshot.services.find((service) => service.id === "netalertx")).toMatchObject({
+      state: "online",
+      metric: "11 / 15 online",
+      href: "https://zhou12600kf.example.ts.net:20211/",
+    });
+    expect(snapshot.services.find((service) => service.id === "router")).toMatchObject({
+      state: "online",
+      metric: "Gateway reachable",
+      href: "https://zhou12600kf.example.ts.net:12443/",
+    });
     expect(snapshot.services.find((service) => service.id === "hkvps")).toMatchObject({
       state: "online",
       metric: "9% CPU · 15% RAM",
@@ -140,6 +156,8 @@ describe("126f home server status", () => {
       zashboard: "http://100.80.188.111:60127",
       beszel: "http://100.80.188.111:8091",
       harness: "https://zhou12600kf.example.ts.net/",
+      netalertx: "https://zhou12600kf.example.ts.net:20211/",
+      router: "https://zhou12600kf.example.ts.net:12443/",
     });
     (snapshot.host as typeof snapshot.host & { privateAddress: string }).privateAddress = "10.23.118.126";
     (snapshot.services[0] as typeof snapshot.services[number] & { adminUrl: string }).adminUrl = "https://admin.example.invalid";
@@ -155,6 +173,11 @@ describe("126f home server status", () => {
       detail: "游戏服务",
     });
     expect(publicSnapshot.services.find((service) => service.id === "tailscale")?.detail).toBe("私有组网");
+    expect(publicSnapshot.services.find((service) => service.id === "netalertx")).toMatchObject({
+      metric: "在线",
+      detail: "局域网设备可见性",
+    });
+    expect(serializedServices).not.toContain("11 / 15");
     expect(publicSnapshot.host).toMatchObject({ hostname: "126f", cpuPercent: 18.4, memoryPercent: 42.7, diskPercent: 1.4 });
     expect(JSON.stringify(publicSnapshot)).not.toContain("ZHOU12600kf");
     expect(JSON.stringify(publicSnapshot)).not.toContain("10.23.118.126");
@@ -209,6 +232,7 @@ describe("126f home server status", () => {
       readHost: async () => telemetry.host,
       isUnitActive: async (unit) => unit !== "npc",
       isHttpHealthy: async (url) => url.endsWith(":8091/health"),
+      readNetAlertX: async () => ({ available: true, onlineDevices: 11, totalDevices: 15 }),
       readMinecraft: async () => telemetry.minecraft,
       readTailscaleStatus: async () => ({
         Self: { Online: true, TailscaleIPs: ["100.80.188.111"] },
@@ -229,7 +253,9 @@ describe("126f home server status", () => {
         npc: false,
         beszel: true,
         harness: false,
+        router: false,
       },
+      netalertx: { available: true, onlineDevices: 11, totalDevices: 15 },
       tailscale: {
         online: true,
         peerCount: 1,

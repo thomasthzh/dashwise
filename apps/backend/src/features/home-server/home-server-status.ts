@@ -26,6 +26,12 @@ export type HkvpsAppsTelemetry = {
   }>>;
 };
 
+export type NetAlertXTelemetry = {
+  available: boolean;
+  onlineDevices: number;
+  totalDevices: number;
+};
+
 export type HomeServerTelemetry = {
   generatedAt: string;
   host: {
@@ -45,7 +51,9 @@ export type HomeServerTelemetry = {
     npc: boolean;
     beszel: boolean;
     harness: boolean;
+    router: boolean;
   };
+  netalertx: NetAlertXTelemetry;
   minecraft: {
     online: boolean;
     playersOnline?: number;
@@ -78,6 +86,7 @@ export type HomeServerRuntime = {
   readTailscaleStatus: () => Promise<unknown>;
   pingTailscalePeer: (host: string) => Promise<number | undefined>;
   readHkvpsApps: () => Promise<HkvpsAppsTelemetry>;
+  readNetAlertX: () => Promise<NetAlertXTelemetry>;
 };
 
 export type HomeServerSnapshot = {
@@ -116,6 +125,8 @@ export type HomeServerService = {
     | "zashboard"
     | "beszel"
     | "monitoring"
+    | "netalertx"
+    | "router"
     | "tailscale"
     | "nps"
     | "hkvps"
@@ -288,6 +299,28 @@ export function buildHomeServerSnapshot(
         href: optionalUrl(urls, "monitoring") || "/apps/monitoring",
       },
       {
+        id: "netalertx",
+        origin: "126f",
+        name: "NetAlertX",
+        icon: "fa6-solid:eye",
+        state: telemetry.netalertx.available ? "online" : "offline",
+        metric: telemetry.netalertx.available
+          ? `${telemetry.netalertx.onlineDevices} / ${telemetry.netalertx.totalDevices} online`
+          : "Scanner unavailable",
+        detail: "LAN visibility · live discovery",
+        href: optionalUrl(urls, "netalertx"),
+      },
+      {
+        id: "router",
+        origin: "126f",
+        name: "LAN Router",
+        icon: "fa6-solid:wifi",
+        state: telemetry.services.router ? "online" : "offline",
+        metric: telemetry.services.router ? "Gateway reachable" : "Gateway unavailable",
+        detail: "DHCP · reservations · filters",
+        href: optionalUrl(urls, "router"),
+      },
+      {
         id: "tailscale",
         origin: "126f",
         name: "Tailscale",
@@ -339,6 +372,8 @@ export function toPublicHomeServerSnapshot(snapshot: HomeServerSnapshot): Public
     zashboard: "网络控制器",
     beszel: "双主机监控",
     monitoring: "主机遥测",
+    netalertx: "局域网设备可见性",
+    router: "局域网网关管理",
     tailscale: "私有组网",
     nps: "公网中继",
     hkvps: "远端主机遥测",
@@ -388,7 +423,9 @@ export function toPublicHomeServerSnapshot(snapshot: HomeServerSnapshot): Public
         name: identity?.name ?? service.name,
         icon: service.icon,
         state: service.state,
-        metric: service.metric,
+        metric: service.id === "netalertx" || service.id === "router"
+          ? service.state === "online" ? "在线" : service.state === "offline" ? "离线" : "未知"
+          : service.metric,
         detail: details[service.id],
       };
     }),
@@ -437,6 +474,8 @@ export async function collectHomeServerTelemetry(
     npc,
     beszel,
     harness,
+    router,
+    netalertx,
     minecraft,
     rawTailscale,
     hkvpsLatencyMs,
@@ -449,6 +488,8 @@ export async function collectHomeServerTelemetry(
     runtime.isUnitActive("npc"),
     runtime.isHttpHealthy("http://127.0.0.1:8091/health"),
     runtime.isHttpHealthy("http://127.0.0.1:3080/"),
+    runtime.isHttpHealthy("http://192.168.10.1/admin/login.asp"),
+    runtime.readNetAlertX(),
     runtime.readMinecraft(),
     runtime.readTailscaleStatus(),
     runtime.pingTailscalePeer("100.122.69.109"),
@@ -466,7 +507,9 @@ export async function collectHomeServerTelemetry(
       npc,
       beszel,
       harness,
+      router,
     },
+    netalertx,
     minecraft,
     hkvpsApps,
     tailscale: {

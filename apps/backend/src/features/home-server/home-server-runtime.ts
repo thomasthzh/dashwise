@@ -6,6 +6,7 @@ import type {
   HkvpsAppId,
   HkvpsAppsTelemetry,
   HomeServerRuntime,
+  NetAlertXTelemetry,
   ServiceState,
 } from "./home-server-status";
 
@@ -22,6 +23,7 @@ export type HomeServerRuntimeDependencies = {
   run: (command: string, args: string[]) => Promise<{ exitCode: number; stdout: string }>;
   fetch: (url: string) => Promise<{ ok: boolean }>;
   fetchJson: (url: string) => Promise<unknown>;
+  fetchNetAlertX: () => Promise<unknown>;
   pingMinecraft: typeof pingMinecraftServer;
 };
 
@@ -106,6 +108,29 @@ export function parseHkvpsAppsPayload(value: unknown): HkvpsAppsTelemetry {
   }
 
   return { available: true, ...(host ? { host } : {}), services };
+}
+
+export function parseNetAlertXPayload(value: unknown): NetAlertXTelemetry {
+  const root = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const data = root.data && typeof root.data === "object" ? root.data as Record<string, unknown> : {};
+  const result = data.devices && typeof data.devices === "object"
+    ? data.devices as Record<string, unknown>
+    : {};
+  if (!Array.isArray(result.devices)) {
+    return { available: false, onlineDevices: 0, totalDevices: 0 };
+  }
+
+  let onlineDevices = 0;
+  let totalDevices = 0;
+  for (const item of result.devices) {
+    if (!item || typeof item !== "object") continue;
+    const device = item as Record<string, unknown>;
+    const archived = device.devIsArchived === 1;
+    if (archived) continue;
+    totalDevices += 1;
+    if (device.devPresentLastScan === 1) onlineDevices += 1;
+  }
+  return { available: true, onlineDevices, totalDevices };
 }
 
 export async function pingMinecraftServer(
@@ -278,6 +303,13 @@ export function createHomeServerRuntime(
         return { available: false, services: {} };
       }
     },
+    readNetAlertX: async () => {
+      try {
+        return parseNetAlertXPayload(await dependencies.fetchNetAlertX());
+      } catch {
+        return { available: false, onlineDevices: 0, totalDevices: 0 };
+      }
+    },
   };
 }
 
@@ -315,6 +347,24 @@ export const defaultHomeServerRuntime = createHomeServerRuntime({
       signal: AbortSignal.timeout(1_800),
     });
     if (!response.ok) throw new Error(`hkvps exporter returned HTTP ${response.status}`);
+    return response.json();
+  },
+  fetchNetAlertX: async () => {
+    const token = Bun.env.HOME_SERVER_NETALERTX_TOKEN?.trim();
+    if (!token) throw new Error("NetAlertX API token is not configured");
+    const response = await fetch("http://127.0.0.1:20212/graphql", {
+      method: "POST",
+      redirect: "error",
+      signal: AbortSignal.timeout(1_800),
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: "{ devices { devices { devPresentLastScan devIsArchived } } }",
+      }),
+    });
+    if (!response.ok) throw new Error(`NetAlertX API returned HTTP ${response.status}`);
     return response.json();
   },
   pingMinecraft: pingMinecraftServer,

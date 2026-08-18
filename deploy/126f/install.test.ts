@@ -64,6 +64,16 @@ test("deploys immutable releases without destructive git operations or embedded 
   expect(source).toContain("install -m 0640");
 });
 
+test("seeds Tailnet-only LAN console links without embedding the NetAlertX token", () => {
+  expect(source).toContain(
+    "HOME_SERVER_NETALERTX_URL=https://zhou12600kf.tailb8f499.ts.net:20211/",
+  );
+  expect(source).toContain(
+    "HOME_SERVER_ROUTER_URL=https://zhou12600kf.tailb8f499.ts.net:12443/",
+  );
+  expect(source).not.toMatch(/HOME_SERVER_NETALERTX_TOKEN=[A-Za-z0-9_-]+/);
+});
+
 test("quarantines incomplete releases and only rolls back to a different completed release", () => {
   expect(source).toContain('release_marker=${release_dir}/.dashwise-release-complete');
   expect(source).toContain('mv -- "${release_dir}" "${failed_release_dir}"');

@@ -7,6 +7,7 @@ import {
   defaultHomeServerRuntime,
   parseMinecraftStatusPayload,
   parseHkvpsAppsPayload,
+  parseNetAlertXPayload,
   parseTailscalePingOutput,
   pingMinecraftServer,
 } from "./home-server-runtime";
@@ -78,6 +79,22 @@ describe("126f home server runtime parsers", () => {
     });
   });
 
+  test("reduces NetAlertX GraphQL data to non-sensitive device counts", () => {
+    expect(parseNetAlertXPayload({
+      data: {
+        devices: {
+          devices: [
+            { devPresentLastScan: 1, devIsArchived: 0, devMac: "not-exported" },
+            { devPresentLastScan: 0, devIsArchived: 0 },
+            { devPresentLastScan: 1, devIsArchived: 1 },
+          ],
+        },
+      },
+    })).toEqual({ available: true, onlineDevices: 1, totalDevices: 2 });
+    expect(parseNetAlertXPayload({ data: { devices: { devices: "invalid" } } }))
+      .toEqual({ available: false, onlineDevices: 0, totalDevices: 0 });
+  });
+
   test("performs a Minecraft server-list ping against a TCP endpoint", async () => {
     const server = createServer((socket) => {
       socket.once("data", () => {
@@ -136,6 +153,9 @@ describe("126f home server runtime parsers", () => {
         host: { cpuPercent: 4, memoryPercent: 20, diskPercent: 35, uptimeSeconds: 100, load1: 0.2 },
         services: { edge: { state: "online", online: 3, total: 3 } },
       }),
+      fetchNetAlertX: async () => ({
+        data: { devices: { devices: [{ devPresentLastScan: 1, devIsArchived: 0 }] } },
+      }),
       pingMinecraft: async () => ({ online: true, playersOnline: 0, playersMax: 20, version: "1.21.1", latencyMs: 1 }),
     });
 
@@ -158,6 +178,11 @@ describe("126f home server runtime parsers", () => {
       available: true,
       services: { edge: { state: "online", online: 3, total: 3 } },
     });
+    await expect(runtime.readNetAlertX()).resolves.toEqual({
+      available: true,
+      onlineDevices: 1,
+      totalDevices: 1,
+    });
   });
 
   test("exposes a complete default runtime for the production route", () => {
@@ -170,6 +195,7 @@ describe("126f home server runtime parsers", () => {
       "readTailscaleStatus",
       "pingTailscalePeer",
       "readHkvpsApps",
+      "readNetAlertX",
     ] as const) {
       expect(defaultHomeServerRuntime[method]).toBeFunction();
     }
