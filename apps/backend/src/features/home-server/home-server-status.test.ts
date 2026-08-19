@@ -20,6 +20,23 @@ const telemetry: HomeServerTelemetry = {
     diskTotalBytes: 972_810_190_848,
     load1: 1.24,
   },
+  hardware: {
+    boardModel: "PRIVATE-MS-7D99",
+    temperatures: [{
+      id: "coretemp:private:temp1",
+      source: "coretemp",
+      label: "PRIVATE-CPU-SENSOR",
+      celsius: 61.2,
+    }],
+    fans: [{
+      id: "nct6687:private:fan1",
+      source: "nct6687",
+      label: "PRIVATE-CPU-FAN",
+      rpm: 1264,
+    }],
+    swapUsedBytes: 603_979_776,
+    swapTotalBytes: 34_359_738_368,
+  },
   services: {
     mcsmWeb: true,
     mcsmDaemon: true,
@@ -135,6 +152,7 @@ describe("126f home server status", () => {
       memoryPercent: 42.7,
       diskPercent: 1.4,
     });
+    expect(snapshot.hardware).toEqual(telemetry.hardware);
   });
 
   test("marks a partially running MCSManager pair as degraded", () => {
@@ -164,6 +182,7 @@ describe("126f home server status", () => {
 
     const publicSnapshot = toPublicHomeServerSnapshot(snapshot);
     const serializedServices = JSON.stringify(publicSnapshot.services);
+    const serializedPublicSnapshot = JSON.stringify(publicSnapshot);
 
     expect(publicSnapshot.services).toHaveLength(snapshot.services.length);
     expect(publicSnapshot.services.every((service) => !("href" in service))).toBe(true);
@@ -179,9 +198,14 @@ describe("126f home server status", () => {
     });
     expect(serializedServices).not.toContain("11 / 15");
     expect(publicSnapshot.host).toMatchObject({ hostname: "126f", cpuPercent: 18.4, memoryPercent: 42.7, diskPercent: 1.4 });
-    expect(JSON.stringify(publicSnapshot)).not.toContain("ZHOU12600kf");
-    expect(JSON.stringify(publicSnapshot)).not.toContain("10.23.118.126");
-    expect(JSON.stringify(publicSnapshot)).not.toContain("admin.example.invalid");
+    expect(publicSnapshot).not.toHaveProperty("hardware");
+    expect(serializedPublicSnapshot).not.toContain("PRIVATE-MS-7D99");
+    expect(serializedPublicSnapshot).not.toContain("PRIVATE-CPU-SENSOR");
+    expect(serializedPublicSnapshot).not.toContain("PRIVATE-CPU-FAN");
+    expect(serializedPublicSnapshot).not.toContain("1264");
+    expect(serializedPublicSnapshot).not.toContain("ZHOU12600kf");
+    expect(serializedPublicSnapshot).not.toContain("10.23.118.126");
+    expect(serializedPublicSnapshot).not.toContain("admin.example.invalid");
     expect(publicSnapshot.services.find((service) => service.id === "remote-host")?.name).toBe("远端服务器");
     expect(JSON.stringify(publicSnapshot)).not.toContain("hkvps");
     expect(serializedServices).not.toContain("100.80.188.111");
@@ -230,6 +254,7 @@ describe("126f home server status", () => {
     const sample = await collectHomeServerTelemetry({
       now: () => new Date("2026-08-14T01:02:03.000Z"),
       readHost: async () => telemetry.host,
+      readHardware: async () => telemetry.hardware,
       isUnitActive: async (unit) => unit !== "npc",
       isHttpHealthy: async (url) => url.endsWith(":8091/health"),
       readNetAlertX: async () => ({ available: true, onlineDevices: 11, totalDevices: 15 }),
@@ -262,6 +287,7 @@ describe("126f home server status", () => {
         hkvps: { online: true, connection: "direct", latencyMs: 47 },
       },
       hkvpsApps: telemetry.hkvpsApps,
+      hardware: telemetry.hardware,
     });
   });
 });

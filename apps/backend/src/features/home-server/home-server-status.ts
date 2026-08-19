@@ -1,3 +1,5 @@
+import type { HardwareTelemetry } from "./home-server-hardware";
+
 export type ServiceState = "online" | "degraded" | "offline" | "unknown";
 
 export type HkvpsAppId =
@@ -44,6 +46,7 @@ export type HomeServerTelemetry = {
     diskTotalBytes: number;
     load1: number;
   };
+  hardware: HardwareTelemetry;
   services: {
     mcsmWeb: boolean;
     mcsmDaemon: boolean;
@@ -80,6 +83,7 @@ export type TailscaleSummary = {
 export type HomeServerRuntime = {
   now: () => Date;
   readHost: () => Promise<HomeServerTelemetry["host"]>;
+  readHardware: () => Promise<HardwareTelemetry>;
   isUnitActive: (unit: string) => Promise<boolean>;
   isHttpHealthy: (url: string) => Promise<boolean>;
   readMinecraft: () => Promise<HomeServerTelemetry["minecraft"]>;
@@ -103,6 +107,7 @@ export type HomeServerSnapshot = {
     diskUsedBytes: number;
     diskTotalBytes: number;
   };
+  hardware: HardwareTelemetry;
   services: HomeServerService[];
 };
 
@@ -248,6 +253,7 @@ export function buildHomeServerSnapshot(
       memoryPercent,
       diskPercent,
     },
+    hardware: telemetry.hardware,
     services: [
       {
         id: "mcsmanager",
@@ -468,6 +474,7 @@ export async function collectHomeServerTelemetry(
 ): Promise<HomeServerTelemetry> {
   const [
     host,
+    hardware,
     mcsmWeb,
     mcsmDaemon,
     mihomo,
@@ -482,6 +489,7 @@ export async function collectHomeServerTelemetry(
     hkvpsApps,
   ] = await Promise.all([
     runtime.readHost(),
+    runtime.readHardware(),
     runtime.isUnitActive("mcsm-web"),
     runtime.isUnitActive("mcsm-daemon"),
     runtime.isUnitActive("mihomo"),
@@ -500,6 +508,7 @@ export async function collectHomeServerTelemetry(
   return {
     generatedAt: runtime.now().toISOString(),
     host,
+    hardware,
     services: {
       mcsmWeb,
       mcsmDaemon,

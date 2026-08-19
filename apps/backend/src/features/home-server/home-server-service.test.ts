@@ -18,6 +18,12 @@ test("home server status service reuses a fresh sample and refreshes expired dat
       diskTotalBytes: 10,
       load1: 0,
     },
+    hardware: {
+      temperatures: [],
+      fans: [],
+      swapUsedBytes: 0,
+      swapTotalBytes: 0,
+    },
     services: {
       mcsmWeb: true,
       mcsmDaemon: true,
