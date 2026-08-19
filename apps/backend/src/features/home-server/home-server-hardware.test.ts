@@ -115,4 +115,19 @@ describe("Linux hardware telemetry", () => {
 
     expect(firstResult.temperatures[0]?.id).toBe(secondResult.temperatures[0]?.id);
   });
+
+  test("orders numbered fan inputs naturally", async () => {
+    const fs = memoryHardwareFs({
+      "/sys/class/hwmon/hwmon0/name": "nct6687\n",
+      "/sys/class/hwmon/hwmon0/fan10_input": "1000\n",
+      "/sys/class/hwmon/hwmon0/fan2_input": "200\n",
+      "/sys/class/hwmon/hwmon0/fan1_input": "100\n",
+    }, {
+      "/sys/class/hwmon/hwmon0/device": "/sys/devices/platform/nct6683.2592",
+    });
+
+    const result = await readLinuxHardwareTelemetry(fs);
+
+    expect(result.fans.map((fan) => fan.label)).toEqual(["Fan 1", "Fan 2", "Fan 10"]);
+  });
 });

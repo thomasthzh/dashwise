@@ -5,6 +5,7 @@ import useAuth from "@/context/useAuth";
 import { backendUrl } from "@/lib/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryClient";
+import { closeActivitySocket } from "@/context/activitySocket";
 
 export type ActivityNotification = {
   id: string;
@@ -82,7 +83,7 @@ export function ActivityProvider({ children, disabled = false }: { children: Rea
     return () => {
       closed = true;
       if (reconnectTimer.current !== null) window.clearTimeout(reconnectTimer.current);
-      socket.current?.close();
+      if (socket.current) closeActivitySocket(socket.current);
       socket.current = null;
     };
   }, [disabled, queryClient, token]);

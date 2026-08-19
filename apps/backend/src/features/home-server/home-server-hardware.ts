@@ -150,7 +150,7 @@ export async function readLinuxHardwareTelemetry(
   const boardModel = (await optionalRead(fs, "/sys/class/dmi/id/board_name"))?.slice(0, 120);
   const swap = parseSwap(await optionalRead(fs, "/proc/meminfo"));
   temperatures.sort((left, right) => left.id.localeCompare(right.id));
-  fans.sort((left, right) => left.id.localeCompare(right.id));
+  fans.sort((left, right) => left.id.localeCompare(right.id, undefined, { numeric: true }));
 
   return {
     ...(boardModel ? { boardModel } : {}),
