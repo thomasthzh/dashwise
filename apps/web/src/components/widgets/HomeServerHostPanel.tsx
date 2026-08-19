@@ -11,6 +11,10 @@ type HomeServerHostPanelProps = {
   snapshot: HomeServerSnapshot;
   stale: boolean;
   readOnly: boolean;
+  onReclaimMemory?: () => void;
+  memoryReclaiming?: boolean;
+  memoryReclaimedBytes?: number;
+  memoryReclaimFailed?: boolean;
 };
 
 function StatusDot({ state }: { state: HomeServerService["state"] }) {
@@ -98,10 +102,22 @@ function percentage(used: number, total: number) {
   return Math.min(100, Math.max(0, (used / total) * 100));
 }
 
-function HardwareHostCard({ snapshot, stale, remoteHost }: {
+function HardwareHostCard({
+  snapshot,
+  stale,
+  remoteHost,
+  onReclaimMemory,
+  memoryReclaiming = false,
+  memoryReclaimedBytes,
+  memoryReclaimFailed = false,
+}: {
   snapshot: HomeServerSnapshot;
   stale: boolean;
   remoteHost: HomeServerService | undefined;
+  onReclaimMemory?: () => void;
+  memoryReclaiming?: boolean;
+  memoryReclaimedBytes?: number;
+  memoryReclaimFailed?: boolean;
 }) {
   const panel = resolveHardwarePanel(snapshot);
   if (!panel) return <CompactHostCard snapshot={snapshot} stale={stale} remoteHost={remoteHost} />;
@@ -157,8 +173,29 @@ function HardwareHostCard({ snapshot, stale, remoteHost }: {
 
       <section className="home-hardware-section" aria-labelledby="home-hardware-resource-title">
         <div className="home-hardware-section__title" id="home-hardware-resource-title">
-          <span>资源占用</span><small>旧数据迁入</small>
+          <span>资源占用</span>
+          {onReclaimMemory ? (
+            <button
+              type="button"
+              className="home-memory-reclaim"
+              onClick={onReclaimMemory}
+              disabled={memoryReclaiming}
+              aria-busy={memoryReclaiming}
+              title="回收可重建的系统缓存"
+            >
+              <Icon icon={memoryReclaiming ? "fa6-solid:rotate" : "fa6-solid:broom"} />
+              {memoryReclaiming ? "正在优化" : "优化内存"}
+            </button>
+          ) : null}
         </div>
+        {memoryReclaimFailed ? (
+          <p className="home-memory-reclaim-result is-error" role="status">优化失败，请重试</p>
+        ) : memoryReclaimedBytes != null ? (
+          <p className="home-memory-reclaim-result" role="status">
+            已回收 {formatBinaryBytes(memoryReclaimedBytes)}
+            {memoryReclaimedBytes === 0 ? "，当前无需清理" : ""}
+          </p>
+        ) : null}
         <div className="home-host-metrics home-hardware-resources">
           {resources.map((resource) => (
             <div key={resource.key} className={`home-host-metric home-hardware-resource is-${resource.key}`}>
@@ -175,13 +212,31 @@ function HardwareHostCard({ snapshot, stale, remoteHost }: {
   );
 }
 
-export default function HomeServerHostPanel({ snapshot, stale, readOnly }: HomeServerHostPanelProps) {
+export default function HomeServerHostPanel({
+  snapshot,
+  stale,
+  readOnly,
+  onReclaimMemory,
+  memoryReclaiming,
+  memoryReclaimedBytes,
+  memoryReclaimFailed,
+}: HomeServerHostPanelProps) {
   const remoteHost = snapshot.services.find((service) => service.id === "hkvps" || service.id === "remote-host");
   return (
     <div className="home-side-stack">
       <AccessCard snapshot={snapshot} />
       {!readOnly && snapshot.hardware
-        ? <HardwareHostCard snapshot={snapshot} stale={stale} remoteHost={remoteHost} />
+        ? (
+          <HardwareHostCard
+            snapshot={snapshot}
+            stale={stale}
+            remoteHost={remoteHost}
+            onReclaimMemory={onReclaimMemory}
+            memoryReclaiming={memoryReclaiming}
+            memoryReclaimedBytes={memoryReclaimedBytes}
+            memoryReclaimFailed={memoryReclaimFailed}
+          />
+        )
         : <CompactHostCard snapshot={snapshot} stale={stale} remoteHost={remoteHost} />}
     </div>
   );

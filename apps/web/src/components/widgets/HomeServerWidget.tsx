@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Icon } from "@iconify-icon/react";
 
 import useAuth from "@/context/useAuth";
@@ -8,6 +8,7 @@ import HomeServerHostPanel from "./HomeServerHostPanel";
 import {
   fetchHomeServerStatus,
   fetchPublicHomeServerStatus,
+  reclaimHomeServerMemory,
   resolveHomeServerWidgetPolicy,
   type HomeServerService,
   type HomeServerSnapshot,
@@ -105,6 +106,10 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
     staleTime: 7_000,
     retry: 1,
   });
+  const memoryReclaim = useMutation({
+    mutationFn: () => withAuth((auth) => reclaimHomeServerMemory(auth)),
+    onSuccess: () => query.refetch(),
+  });
 
   if (query.isLoading || !query.data) {
     if (query.isError) {
@@ -127,7 +132,19 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
   const freshness = resolveTelemetryFreshness({ hasData: Boolean(query.data), isError: query.isError || query.isRefetchError });
   const stale = freshness === "stale";
   if (variant === "activity") return <div className={className}><ActivityPanel snapshot={query.data} stale={stale} /></div>;
-  if (variant === "host") return <div className={className}><HomeServerHostPanel snapshot={query.data} stale={stale} readOnly={effectiveReadOnly} /></div>;
+  if (variant === "host") return (
+    <div className={className}>
+      <HomeServerHostPanel
+        snapshot={query.data}
+        stale={stale}
+        readOnly={effectiveReadOnly}
+        onReclaimMemory={() => memoryReclaim.mutate()}
+        memoryReclaiming={memoryReclaim.isPending}
+        memoryReclaimedBytes={memoryReclaim.isPending ? undefined : memoryReclaim.data?.reclaimedBytes}
+        memoryReclaimFailed={memoryReclaim.isError}
+      />
+    </div>
+  );
   const localServices = query.data.services.filter((service) => service.origin === "126f");
   const remoteServices = query.data.services.filter((service) => service.origin !== "126f");
   const remoteLabel = remoteServices.some((service) => service.origin === "hkvps") ? "hkvps" : "远端";

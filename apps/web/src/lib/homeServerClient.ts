@@ -16,6 +16,11 @@ export type {
   PublicHomeServerSnapshot,
 } from "@dashwise/types/sdk";
 
+export type MemoryReclaimResult = {
+  reclaimedBytes: number;
+  completedAt: string;
+};
+
 export function shouldUsePrivateHomeServerStatus(token: string | null, readOnly = false) {
   return Boolean(token) && !readOnly;
 }
@@ -59,4 +64,27 @@ export async function fetchPublicHomeServerStatus(options?: {
     throw new Error("error" in payload && payload.error ? payload.error : "Status collection failed");
   }
   return payload as PublicHomeServerSnapshot;
+}
+
+export async function reclaimHomeServerMemory(
+  auth: ActionAuth,
+  options?: {
+    baseUrl?: string;
+    fetch?: FetchLike;
+  },
+): Promise<MemoryReclaimResult> {
+  if (!auth.token) throw new Error("Unauthorized");
+  const baseUrl = options?.baseUrl || (typeof window === "undefined" ? "http://127.0.0.1" : window.location.origin);
+  const fetchImpl = options?.fetch || fetch;
+  const response = await fetchImpl(new URL("/api/v1/home-server/reclaim-memory", baseUrl), {
+    method: "POST",
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+  const payload = await response.json() as MemoryReclaimResult | { error?: string };
+  if (!response.ok) {
+    const error = new Error("error" in payload && payload.error ? payload.error : "Memory reclaim failed") as Error & { status: number };
+    error.status = response.status;
+    throw error;
+  }
+  return payload as MemoryReclaimResult;
 }
