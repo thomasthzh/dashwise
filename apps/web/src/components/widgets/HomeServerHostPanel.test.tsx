@@ -37,7 +37,7 @@ const snapshot: HomeServerSnapshot = {
   services: [
     { id: "tailscale", origin: "126f", name: "Tailscale", icon: "simple-icons:tailscale", state: "online", metric: "4 peers", detail: "Tailnet" },
     { id: "nps", origin: "126f", name: "NPS", icon: "fa6-solid:network-wired", state: "online", metric: "Client online", detail: "fallback" },
-    { id: "hkvps", origin: "hkvps", name: "hkvps", icon: "fa6-solid:server", state: "online", metric: "2% CPU", detail: "36 ms · Tailscale direct" },
+    { id: "hkvps", origin: "hkvps", name: "hkvps", icon: "fa6-solid:server", state: "online", metric: "2% CPU · 18% RAM", detail: "36 ms · Tailscale direct" },
   ],
 };
 
@@ -61,6 +61,7 @@ test("renders the approved integrated hardware panel for administrators", () => 
   expect(markup).toContain("交换空间");
   expect(markup).toContain("内存");
   expect(markup).toContain("根存储");
+  expect(markup).toContain("2% CPU · 18% RAM");
   expect(markup).toContain("36 ms · Tailscale direct");
 });
 

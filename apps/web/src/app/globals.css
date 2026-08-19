@@ -234,6 +234,17 @@ body,
   background-color: #03111d;
 }
 
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
 #root > :not(.ocean-background) {
   position: relative;
   z-index: 1;
@@ -537,8 +548,8 @@ a.home-service-card:active {
   color: rgb(197 237 251 / 70%);
 }
 
-.home-activity-row span,
-.home-peer-row span { min-width: 0; flex: 1; }
+.home-activity-row > span,
+.home-peer-row__identity { min-width: 0; flex: 1; }
 .home-activity-row strong,
 .home-activity-row small,
 .home-peer-row strong,
@@ -547,6 +558,18 @@ a.home-service-card:active {
 .home-peer-row strong { font-size: .66rem; font-weight: 600; }
 .home-activity-row small,
 .home-peer-row small { margin-top: 1px; overflow: hidden; color: rgb(255 255 255 / 38%); font-size: .55rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.home-peer-row__metric {
+  max-width: 112px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  color: rgb(220 247 255 / 68%);
+  font-size: .51rem;
+  font-weight: 650;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .home-access-card {
   min-height: 72px;
@@ -617,6 +640,11 @@ a.home-service-card:active {
 .home-host-metric progress::-webkit-progress-value { border-radius: 99px; background: linear-gradient(90deg, #77d4f2, #82f0c5); }
 .home-host-metric progress::-moz-progress-bar { border-radius: 99px; background: #82e5d0; }
 .home-host-metric small { display: block; color: rgb(255 255 255 / 35%); font-size: .49rem; }
+
+.home-host-card progress {
+  filter: drop-shadow(0 0 5px rgb(126 255 205 / 65%));
+  animation: home-progress-glow 2.8s ease-in-out infinite;
+}
 
 .home-hardware-card {
   padding: 14px;
@@ -791,16 +819,11 @@ a.home-service-card:active {
   margin: 0;
 }
 
-.home-hardware-resource.is-memory progress {
-  filter: drop-shadow(0 0 5px rgb(126 255 205 / 65%));
-  animation: home-memory-glow 2.8s ease-in-out infinite;
-}
-
 .home-hardware-card .home-peer-row {
   margin-top: 11px;
 }
 
-@keyframes home-memory-glow {
+@keyframes home-progress-glow {
   50% { filter: drop-shadow(0 0 9px rgb(126 255 205 / 92%)); }
 }
 
@@ -878,5 +901,5 @@ a.home-service-card:active {
   .home-service-card,
   .ocean-switcher__menu,
   .home-server-loading__item,
-  .home-hardware-resource.is-memory progress { animation: none; transition: none; }
+  .home-host-card progress { animation: none; transition: none; }
 }

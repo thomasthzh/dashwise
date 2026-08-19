@@ -36,13 +36,15 @@ function AccessCard({ snapshot }: { snapshot: HomeServerSnapshot }) {
 }
 
 function PeerRow({ remoteHost }: { remoteHost: HomeServerService | undefined }) {
+  const online = remoteHost?.state === "online";
   return (
     <div className="home-peer-row">
       <Icon icon="fa6-solid:server" />
-      <span>
+      <span className="home-peer-row__identity">
         <strong>{remoteHost?.name || "远端服务器"}</strong>
-        <small>{remoteHost?.detail || "远端链路"}</small>
+        <small>{online ? remoteHost?.detail || "远端链路" : "链路离线"}</small>
       </span>
+      <span className="home-peer-row__metric">{online ? remoteHost?.metric || "遥测在线" : "遥测不可用"}</span>
       <StatusDot state={remoteHost?.state || "unknown"} />
     </div>
   );
