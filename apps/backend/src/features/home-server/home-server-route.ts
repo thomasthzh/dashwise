@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
+
 import { Hono } from "hono";
 
 import { toPublicHomeServerSnapshot, type HomeServerSnapshot } from "./home-server-status";
@@ -8,36 +11,32 @@ export type MemoryReclaimResult = {
 };
 
 async function reclaimLinuxMemory(): Promise<MemoryReclaimResult> {
-  const child = Bun.spawn([
-    "/usr/bin/sudo",
-    "-n",
-    "/usr/local/sbin/dashwise-reclaim-memory",
-  ], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const timeout = setTimeout(() => child.kill(), 45_000);
-  try {
-    const [stdout, stderr, exitCode] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
-    ]);
-    if (exitCode !== 0) {
-      throw new Error(stderr.trim() || "Memory reclaim failed");
+  const requestId = randomUUID();
+  const stateRoot = "/var/lib/dashwise/memory-reclaim";
+  await writeFile(`${stateRoot}/request`, `${requestId}\n`, { encoding: "utf8", mode: 0o640 });
+
+  const deadline = Date.now() + 45_000;
+  while (Date.now() < deadline) {
+    try {
+      const result = JSON.parse(await readFile(`${stateRoot}/result.json`, "utf8")) as Partial<MemoryReclaimResult> & {
+        requestId?: string;
+      };
+      if (result.requestId === requestId) {
+        if (!Number.isFinite(result.reclaimedBytes) || Number(result.reclaimedBytes) < 0
+          || typeof result.completedAt !== "string") {
+          throw new Error("Memory reclaim returned invalid data");
+        }
+        return {
+          reclaimedBytes: Math.round(Number(result.reclaimedBytes)),
+          completedAt: result.completedAt,
+        };
+      }
+    } catch (error) {
+      if (!(error instanceof SyntaxError) && (error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
-    const result = JSON.parse(stdout) as Partial<MemoryReclaimResult>;
-    if (!Number.isFinite(result.reclaimedBytes) || Number(result.reclaimedBytes) < 0
-      || typeof result.completedAt !== "string") {
-      throw new Error("Memory reclaim returned invalid data");
-    }
-    return {
-      reclaimedBytes: Math.round(Number(result.reclaimedBytes)),
-      completedAt: result.completedAt,
-    };
-  } finally {
-    clearTimeout(timeout);
+    await Bun.sleep(150);
   }
+  throw new Error("Memory reclaim timed out");
 }
 
 export function createHomeServerRoute(options: {
