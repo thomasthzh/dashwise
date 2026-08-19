@@ -89,6 +89,7 @@ UNIT
 install -o root -g root -m 0644 "$unit_stage/dashwise-memory-reclaim.service" "$service_file"
 install -o root -g root -m 0644 "$unit_stage/dashwise-memory-reclaim.path" "$path_file"
 systemctl daemon-reload
+systemctl reset-failed dashwise-memory-reclaim.service 2>/dev/null || true
 systemctl enable --now dashwise-memory-reclaim.path
 
 printf 'Dashwise memory reclaimer installed\n'

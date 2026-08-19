@@ -6,12 +6,6 @@ set -Eeuo pipefail
   exit 1
 }
 
-exec 9>/run/lock/dashwise-reclaim-memory.lock
-flock -n 9 || {
-  printf 'ERROR: memory reclaim is already running\n' >&2
-  exit 75
-}
-
 state_root=/var/lib/dashwise/memory-reclaim
 request_file=$state_root/request
 result_file=$state_root/result.json
@@ -44,7 +38,7 @@ read_reclaimable_kib() {
     /^Shmem:/ { shared = $2 }
     END {
       total = buffers + cached + reclaimable - shared
-      printf "%.0f\n", total > 0 ? total : 0
+      printf "%.0f\n", (total > 0 ? total : 0)
     }
   ' /proc/meminfo
 }
