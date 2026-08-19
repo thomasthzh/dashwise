@@ -3,6 +3,7 @@ import type { HardwareTemperature, HomeServerSnapshot } from "./homeServerClient
 export type OceanBackgroundKey = "a" | "b" | "c" | "d" | "e" | "f" | "g";
 
 const OCEAN_BACKGROUND_KEYS = new Set<OceanBackgroundKey>(["a", "b", "c", "d", "e", "f", "g"]);
+const EXACT_126F_BOARD_MODEL = "B760M GAMING PLUS WIFI DDR4 II (MS-7D99)";
 
 export function resolveOceanBackground(saved: string | null): OceanBackgroundKey {
   const normalized = saved?.trim().toLowerCase() as OceanBackgroundKey | undefined;
@@ -93,11 +94,20 @@ export function resolveHardwarePanel(snapshot: HomeServerSnapshot) {
       temperature("board", "主板 / ACPI", board),
       temperature("nvme", "NVMe", nvme),
     ],
-    fans: hardware.fans.map((fan) => {
+    fans: hardware.fans.filter((fan) => fan.rpm > 0).map((fan) => {
       const generic = fan.label.match(/^fan\s*(\d+)$/i);
+      const label = generic && hardware.boardModel === EXACT_126F_BOARD_MODEL && fan.source === "nct6687"
+        ? generic[1] === "1"
+          ? "CPU 风扇"
+          : generic[1] === "3"
+            ? "机箱风扇 1"
+            : `风扇 ${generic[1]}`
+        : generic
+          ? `风扇 ${generic[1]}`
+          : fan.label;
       return {
         id: fan.id,
-        label: generic ? `风扇 ${generic[1]}` : fan.label,
+        label,
         rpm: fan.rpm,
       };
     }),

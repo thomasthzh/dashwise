@@ -19,14 +19,18 @@ const snapshot: HomeServerSnapshot = {
     diskTotalBytes: 972_371_521_536,
   },
   hardware: {
-    boardModel: "PRIVATE-MS-7D99",
+    boardModel: "B760M GAMING PLUS WIFI DDR4 II (MS-7D99)",
     temperatures: [
       { id: "cpu", source: "coretemp", label: "Package id 0", celsius: 26 },
       { id: "gpu", source: "nouveau", label: "Temp 1", celsius: 28 },
       { id: "board", source: "acpitz", label: "Temp 1", celsius: 27.8 },
       { id: "nvme", source: "nvme", label: "Composite", celsius: 46.9 },
     ],
-    fans: [{ id: "fan", source: "nct6687", label: "Fan 1", rpm: 1264 }],
+    fans: [
+      { id: "fan-1", source: "nct6687", label: "Fan 1", rpm: 1264 },
+      { id: "fan-2", source: "nct6687", label: "Fan 2", rpm: 0 },
+      { id: "fan-3", source: "nct6687", label: "Fan 3", rpm: 980 },
+    ],
     swapUsedBytes: 603_979_776,
     swapTotalBytes: 34_359_738_368,
   },
@@ -43,13 +47,17 @@ test("renders the approved integrated hardware panel for administrators", () => 
   );
 
   expect(markup).toContain("硬件状态");
-  expect(markup).toContain("PRIVATE-MS-7D99");
+  expect(markup).toContain("B760M GAMING PLUS WIFI DDR4 II (MS-7D99)");
   expect(markup).toContain("Debian · CPU 26.0°C · GPU 28.0°C");
   expect(markup).toContain("CPU");
   expect(markup).toContain("GPU");
   expect(markup).toContain("主板 / ACPI");
   expect(markup).toContain("NVMe");
   expect(markup).toContain("1264 RPM");
+  expect(markup).toContain("CPU 风扇");
+  expect(markup).toContain("机箱风扇 1");
+  expect(markup).not.toContain(">0 RPM<");
+  expect(markup).not.toContain(">风扇 2<");
   expect(markup).toContain("交换空间");
   expect(markup).toContain("内存");
   expect(markup).toContain("根存储");
@@ -62,7 +70,7 @@ test("keeps the anonymous host card compact even if private data is accidentally
   );
 
   expect(markup).not.toContain("硬件状态");
-  expect(markup).not.toContain("PRIVATE-MS-7D99");
+  expect(markup).not.toContain("B760M GAMING PLUS WIFI DDR4 II (MS-7D99)");
   expect(markup).not.toContain("1264 RPM");
   expect(markup).not.toContain("交换空间");
   expect(markup).toContain("RAM");
