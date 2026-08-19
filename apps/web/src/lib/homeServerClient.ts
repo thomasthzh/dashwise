@@ -13,6 +13,28 @@ export type HomeServerService = {
   href?: string;
 };
 
+export type HardwareTemperature = {
+  id: string;
+  source: string;
+  label: string;
+  celsius: number;
+};
+
+export type HardwareFan = {
+  id: string;
+  source: string;
+  label: string;
+  rpm: number;
+};
+
+export type HardwareTelemetry = {
+  boardModel?: string;
+  temperatures: HardwareTemperature[];
+  fans: HardwareFan[];
+  swapUsedBytes: number;
+  swapTotalBytes: number;
+};
+
 export type HomeServerSnapshot = {
   generatedAt: string;
   host: {
@@ -27,6 +49,7 @@ export type HomeServerSnapshot = {
     diskUsedBytes: number;
     diskTotalBytes: number;
   };
+  hardware?: HardwareTelemetry;
   services: HomeServerService[];
 };
 

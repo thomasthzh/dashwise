@@ -1,3 +1,5 @@
+import type { HardwareTemperature, HomeServerSnapshot } from "./homeServerClient";
+
 export type OceanBackgroundKey = "a" | "b" | "c" | "d" | "e" | "f" | "g";
 
 const OCEAN_BACKGROUND_KEYS = new Set<OceanBackgroundKey>(["a", "b", "c", "d", "e", "f", "g"]);
@@ -50,4 +52,56 @@ export function resolveTelemetryFreshness({
 
 export function resolveHomeServerCardHref(href: string | undefined, readOnly = false) {
   return readOnly ? undefined : href;
+}
+
+function hottest(sensors: HardwareTemperature[]) {
+  return sensors.reduce<HardwareTemperature | undefined>(
+    (selected, sensor) => !selected || sensor.celsius > selected.celsius ? sensor : selected,
+    undefined,
+  );
+}
+
+export function resolveHardwarePanel(snapshot: HomeServerSnapshot) {
+  const hardware = snapshot.hardware;
+  if (!hardware) return undefined;
+  const sensors = hardware.temperatures;
+  const fromSource = (pattern: RegExp) => sensors.filter((sensor) => pattern.test(sensor.source));
+  const cpuSensors = fromSource(/^coretemp$/i);
+  const cpu = cpuSensors.find((sensor) => /^package id 0$/i.test(sensor.label))
+    ?? cpuSensors.find((sensor) => /package/i.test(sensor.label))
+    ?? hottest(cpuSensors);
+  const gpu = hottest(fromSource(/^(nouveau|amdgpu|nvidia)$/i));
+  const boardSensors = fromSource(/^nct668[37]$/i);
+  const board = boardSensors.find((sensor) => /^(system|motherboard|mainboard)$/i.test(sensor.label))
+    ?? boardSensors.find((sensor) => /(system|motherboard|mainboard)/i.test(sensor.label))
+    ?? hottest(fromSource(/^acpitz$/i));
+  const nvmeSensors = fromSource(/^nvme$/i);
+  const nvme = hottest(nvmeSensors.filter((sensor) => /^composite$/i.test(sensor.label)))
+    ?? hottest(nvmeSensors);
+
+  const temperature = (
+    key: "cpu" | "gpu" | "board" | "nvme",
+    label: string,
+    sensor: HardwareTemperature | undefined,
+  ) => ({ key, label, celsius: sensor?.celsius });
+
+  return {
+    ...(hardware.boardModel ? { boardModel: hardware.boardModel } : {}),
+    temperatures: [
+      temperature("cpu", "CPU", cpu),
+      temperature("gpu", "GPU", gpu),
+      temperature("board", "主板 / ACPI", board),
+      temperature("nvme", "NVMe", nvme),
+    ],
+    fans: hardware.fans.map((fan) => {
+      const generic = fan.label.match(/^fan\s*(\d+)$/i);
+      return {
+        id: fan.id,
+        label: generic ? `风扇 ${generic[1]}` : fan.label,
+        rpm: fan.rpm,
+      };
+    }),
+    swapUsedBytes: hardware.swapUsedBytes,
+    swapTotalBytes: hardware.swapTotalBytes,
+  };
 }

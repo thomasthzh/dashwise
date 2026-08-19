@@ -4,7 +4,18 @@ import { fetchHomeServerStatus, fetchPublicHomeServerStatus, shouldUsePrivateHom
 
 test("fetches the 126f status endpoint with the authenticated bearer token", async () => {
   let request: Request | undefined;
-  const snapshot = { generatedAt: "now", host: {}, services: [] };
+  const snapshot = {
+    generatedAt: "now",
+    host: {},
+    hardware: {
+      boardModel: "MS-7D99",
+      temperatures: [],
+      fans: [],
+      swapUsedBytes: 0,
+      swapTotalBytes: 0,
+    },
+    services: [],
+  };
   const result = await fetchHomeServerStatus({ token: "secret-token" }, {
     baseUrl: "https://dashboard.example/",
     fetch: async (input, init) => {
@@ -16,6 +27,7 @@ test("fetches the 126f status endpoint with the authenticated bearer token", asy
   expect(request?.url).toBe("https://dashboard.example/api/v1/home-server/status");
   expect(request?.headers.get("Authorization")).toBe("Bearer secret-token");
   expect(result).toEqual(snapshot);
+  expect(result.hardware?.boardModel).toBe("MS-7D99");
 });
 
 test("rejects an unavailable status endpoint", async () => {
