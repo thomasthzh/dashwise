@@ -80,6 +80,7 @@ describe("Linux hardware telemetry", () => {
       "/sys/class/hwmon/hwmon0/temp3_input": "-51000\n",
       "/sys/class/hwmon/hwmon0/fan1_input": "-1\n",
       "/sys/class/hwmon/hwmon0/fan2_input": "100001\n",
+      "/sys/class/hwmon/hwmon0/fan3_input": "12.5\n",
       "/sys/class/hwmon/hwmon1/temp1_input": "42000\n",
       "/proc/meminfo": "SwapTotal: invalid\nSwapFree: 5 kB\n",
     });

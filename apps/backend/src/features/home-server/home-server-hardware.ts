@@ -1,26 +1,11 @@
 import { readdir, readFile, realpath } from "node:fs/promises";
+import type {
+  HardwareFan,
+  HardwareTelemetry,
+  HardwareTemperature,
+} from "@dashwise/api-types";
 
-export type HardwareTemperature = {
-  id: string;
-  source: string;
-  label: string;
-  celsius: number;
-};
-
-export type HardwareFan = {
-  id: string;
-  source: string;
-  label: string;
-  rpm: number;
-};
-
-export type HardwareTelemetry = {
-  boardModel?: string;
-  temperatures: HardwareTemperature[];
-  fans: HardwareFan[];
-  swapUsedBytes: number;
-  swapTotalBytes: number;
-};
+export type { HardwareFan, HardwareTelemetry, HardwareTemperature } from "@dashwise/api-types";
 
 export type HardwareFs = {
   list: (path: string) => Promise<string[]>;
@@ -65,6 +50,11 @@ function numericReading(value: string | undefined, minimum: number, maximum: num
   return Number.isFinite(parsed) && parsed >= minimum && parsed <= maximum
     ? parsed
     : undefined;
+}
+
+function integerReading(value: string | undefined, minimum: number, maximum: number) {
+  if (!value || !/^-?\d+$/.test(value)) return undefined;
+  return numericReading(value, minimum, maximum);
 }
 
 function safeLabel(value: string | undefined, fallback: string) {
@@ -131,7 +121,7 @@ export async function readLinuxHardwareTelemetry(
 
       const fanMatch = filename.match(/^fan(\d+)_input$/);
       if (!fanMatch) continue;
-      const rawRpm = numericReading(
+      const rawRpm = integerReading(
         await optionalRead(fs, `${base}/${filename}`),
         0,
         100_000,

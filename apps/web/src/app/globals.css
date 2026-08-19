@@ -650,16 +650,12 @@ a.home-service-card:active {
   color: rgb(232 248 255 / 66%);
   font-size: .5rem;
   font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
 }
 
 .home-hardware-section__title small {
   color: rgb(232 248 255 / 34%);
   font-size: .44rem;
   font-weight: 550;
-  letter-spacing: .03em;
-  text-transform: none;
 }
 
 .home-hardware-temperatures {

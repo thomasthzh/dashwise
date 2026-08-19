@@ -1,67 +1,32 @@
 import type { ActionAuth } from "@dashwise/types/sdk";
+import type { HomeServerSnapshot, PublicHomeServerSnapshot } from "@dashwise/api-types";
 
-export type HomeServerServiceState = "online" | "degraded" | "offline" | "unknown";
+type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
-export type HomeServerService = {
-  id: string;
-  origin: "126f" | "hkvps" | "remote";
-  name: string;
-  icon: string;
-  state: HomeServerServiceState;
-  metric: string;
-  detail: string;
-  href?: string;
-};
-
-export type HardwareTemperature = {
-  id: string;
-  source: string;
-  label: string;
-  celsius: number;
-};
-
-export type HardwareFan = {
-  id: string;
-  source: string;
-  label: string;
-  rpm: number;
-};
-
-export type HardwareTelemetry = {
-  boardModel?: string;
-  temperatures: HardwareTemperature[];
-  fans: HardwareFan[];
-  swapUsedBytes: number;
-  swapTotalBytes: number;
-};
-
-export type HomeServerSnapshot = {
-  generatedAt: string;
-  host: {
-    hostname: string;
-    uptimeSeconds: number;
-    cpuPercent: number;
-    memoryPercent: number;
-    diskPercent: number;
-    load1: number;
-    memoryUsedBytes: number;
-    memoryTotalBytes: number;
-    diskUsedBytes: number;
-    diskTotalBytes: number;
-  };
-  hardware?: HardwareTelemetry;
-  services: HomeServerService[];
-};
+export type {
+  HardwareFan,
+  HardwareTelemetry,
+  HardwareTemperature,
+  HomeServerService,
+  HomeServerServiceState,
+  HomeServerSnapshot,
+  PublicHomeServerSnapshot,
+} from "@dashwise/api-types";
 
 export function shouldUsePrivateHomeServerStatus(token: string | null, readOnly = false) {
   return Boolean(token) && !readOnly;
+}
+
+export function resolveHomeServerWidgetPolicy(token: string | null, readOnly = false) {
+  const usePrivateStatus = shouldUsePrivateHomeServerStatus(token, readOnly);
+  return { usePrivateStatus, effectiveReadOnly: !usePrivateStatus };
 }
 
 export async function fetchHomeServerStatus(
   auth: ActionAuth,
   options?: {
     baseUrl?: string;
-    fetch?: typeof fetch;
+    fetch?: FetchLike;
   },
 ): Promise<HomeServerSnapshot> {
   if (!auth.token) throw new Error("Unauthorized");
@@ -79,16 +44,16 @@ export async function fetchHomeServerStatus(
 
 export async function fetchPublicHomeServerStatus(options?: {
   baseUrl?: string;
-  fetch?: typeof fetch;
-}): Promise<HomeServerSnapshot> {
+  fetch?: FetchLike;
+}): Promise<PublicHomeServerSnapshot> {
   const baseUrl = options?.baseUrl || (typeof window === "undefined" ? "http://127.0.0.1" : window.location.origin);
   const fetchImpl = options?.fetch || fetch;
   const response = await fetchImpl(new URL("/api/v1/home-server/public-status", baseUrl), {
     credentials: "omit",
   });
-  const payload = await response.json() as HomeServerSnapshot | { error?: string };
+  const payload = await response.json() as PublicHomeServerSnapshot | { error?: string };
   if (!response.ok) {
     throw new Error("error" in payload && payload.error ? payload.error : "Status collection failed");
   }
-  return payload as HomeServerSnapshot;
+  return payload as PublicHomeServerSnapshot;
 }

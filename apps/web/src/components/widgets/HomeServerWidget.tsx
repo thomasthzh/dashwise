@@ -8,7 +8,7 @@ import HomeServerHostPanel from "./HomeServerHostPanel";
 import {
   fetchHomeServerStatus,
   fetchPublicHomeServerStatus,
-  shouldUsePrivateHomeServerStatus,
+  resolveHomeServerWidgetPolicy,
   type HomeServerService,
   type HomeServerSnapshot,
 } from "@/lib/homeServerClient";
@@ -95,7 +95,7 @@ function ActivityPanel({ snapshot, stale }: { snapshot: HomeServerSnapshot; stal
 
 export default function HomeServerWidget({ variant, className, readOnly = false }: HomeServerWidgetProps) {
   const { token, withAuth } = useAuth();
-  const usePrivateStatus = shouldUsePrivateHomeServerStatus(token, readOnly);
+  const { usePrivateStatus, effectiveReadOnly } = resolveHomeServerWidgetPolicy(token, readOnly);
   const query = useQuery({
     queryKey: ["126f", "home-server-status", usePrivateStatus ? "private" : "public"],
     queryFn: () => usePrivateStatus
@@ -127,7 +127,7 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
   const freshness = resolveTelemetryFreshness({ hasData: Boolean(query.data), isError: query.isError || query.isRefetchError });
   const stale = freshness === "stale";
   if (variant === "activity") return <div className={className}><ActivityPanel snapshot={query.data} stale={stale} /></div>;
-  if (variant === "host") return <div className={className}><HomeServerHostPanel snapshot={query.data} stale={stale} readOnly={readOnly} /></div>;
+  if (variant === "host") return <div className={className}><HomeServerHostPanel snapshot={query.data} stale={stale} readOnly={effectiveReadOnly} /></div>;
   const localServices = query.data.services.filter((service) => service.origin === "126f");
   const remoteServices = query.data.services.filter((service) => service.origin !== "126f");
   const remoteLabel = remoteServices.some((service) => service.origin === "hkvps") ? "hkvps" : "远端";
@@ -140,13 +140,13 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
       <div className="home-services__group">
         <div className="home-services__group-label"><span>126f</span><small>{localServices.length} 项</small></div>
         <div className="home-services__grid">
-          {localServices.map((service) => <ServiceCard key={service.id} service={service} readOnly={readOnly} />)}
+          {localServices.map((service) => <ServiceCard key={service.id} service={service} readOnly={effectiveReadOnly} />)}
         </div>
       </div>
       <div className="home-services__group">
         <div className="home-services__group-label"><span>{remoteLabel}</span><small>{remoteServices.length} 项</small></div>
         <div className="home-services__grid is-hkvps">
-          {remoteServices.map((service) => <ServiceCard key={service.id} service={service} readOnly={readOnly} />)}
+          {remoteServices.map((service) => <ServiceCard key={service.id} service={service} readOnly={effectiveReadOnly} />)}
         </div>
       </div>
     </section>

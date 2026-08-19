@@ -18,6 +18,7 @@
     "lint:all": "eslint ."
   },
   "dependencies": {
+    "@dashwise/api-types": "workspace:*",
     "@dashwise/assets": "workspace:*",
     "@dashwise/integrationskit": "workspace:*",
     "@dashwise/types": "workspace:*",

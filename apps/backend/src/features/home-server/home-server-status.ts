@@ -1,6 +1,13 @@
-import type { HardwareTelemetry } from "./home-server-hardware";
+import type {
+  HardwareTelemetry,
+  HomeServerService as ContractHomeServerService,
+  HomeServerServiceState,
+  HomeServerSnapshot as ContractHomeServerSnapshot,
+  PublicHomeServerService as ContractPublicHomeServerService,
+  PublicHomeServerSnapshot as ContractPublicHomeServerSnapshot,
+} from "@dashwise/api-types";
 
-export type ServiceState = "online" | "degraded" | "offline" | "unknown";
+export type ServiceState = HomeServerServiceState;
 
 export type HkvpsAppId =
   | "adguard"
@@ -93,37 +100,7 @@ export type HomeServerRuntime = {
   readNetAlertX: () => Promise<NetAlertXTelemetry>;
 };
 
-export type HomeServerSnapshot = {
-  generatedAt: string;
-  host: {
-    hostname: string;
-    uptimeSeconds: number;
-    cpuPercent: number;
-    memoryPercent: number;
-    diskPercent: number;
-    load1: number;
-    memoryUsedBytes: number;
-    memoryTotalBytes: number;
-    diskUsedBytes: number;
-    diskTotalBytes: number;
-  };
-  hardware: HardwareTelemetry;
-  services: HomeServerService[];
-};
-
-export type PublicHomeServerService = Pick<HomeServerService, "icon" | "state" | "metric" | "detail"> & {
-  id: string;
-  origin: "126f" | "remote";
-  name: string;
-};
-
-export type PublicHomeServerSnapshot = {
-  generatedAt: string;
-  host: HomeServerSnapshot["host"];
-  services: PublicHomeServerService[];
-};
-
-export type HomeServerService = {
+export type HomeServerService = Omit<ContractHomeServerService, "id" | "origin"> & {
   id:
     | "mcsmanager"
     | "minecraft"
@@ -145,13 +122,15 @@ export type HomeServerService = {
     | "hkvps-netdata"
     | "hkvps-edge";
   origin: "126f" | "hkvps";
-  name: string;
-  icon: string;
-  state: ServiceState;
-  metric: string;
-  detail: string;
-  href?: string;
 };
+
+export type HomeServerSnapshot = Omit<ContractHomeServerSnapshot, "hardware" | "services"> & {
+  hardware: HardwareTelemetry;
+  services: HomeServerService[];
+};
+
+export type PublicHomeServerService = ContractPublicHomeServerService;
+export type PublicHomeServerSnapshot = ContractPublicHomeServerSnapshot;
 
 const hkvpsCardDefinitions: Array<{
   id: HomeServerService["id"];

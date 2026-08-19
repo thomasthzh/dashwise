@@ -23,6 +23,7 @@
       "name": "@dashwise/backend",
       "version": "1.0.0",
       "dependencies": {
+        "@dashwise/api-types": "workspace:*",
         "@dashwise/assets": "workspace:*",
         "@dashwise/integrationskit": "workspace:*",
         "@dashwise/types": "workspace:*",

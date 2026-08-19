@@ -44,16 +44,19 @@ function PeerRow({ remoteHost }: { remoteHost: HomeServerService | undefined }) 
   );
 }
 
-function HostHeader({ snapshot, stale, hardware = false }: {
+function HostHeader({ snapshot, stale, hardware = false, hardwareSummary }: {
   snapshot: HomeServerSnapshot;
   stale: boolean;
   hardware?: boolean;
+  hardwareSummary?: string;
 }) {
   return (
     <header>
       <span>
         <strong>{hardware ? `${snapshot.host.hostname} · 硬件状态` : snapshot.host.hostname}</strong>
-        <small>{hardware ? snapshot.hardware?.boardModel || "126f · Debian" : "126f · Debian"}</small>
+        <small title={hardware ? hardwareSummary : undefined}>
+          {hardware ? hardwareSummary || snapshot.hardware?.boardModel || "126f · Debian" : "126f · Debian"}
+        </small>
       </span>
       <span className={`home-live-pill${stale ? " is-stale" : ""}`}>
         <i /> {stale ? "陈旧" : "在线"}
@@ -102,6 +105,13 @@ function HardwareHostCard({ snapshot, stale, remoteHost }: {
 }) {
   const panel = resolveHardwarePanel(snapshot);
   if (!panel) return <CompactHostCard snapshot={snapshot} stale={stale} remoteHost={remoteHost} />;
+  const cpu = panel.temperatures.find((temperature) => temperature.key === "cpu")?.celsius;
+  const gpu = panel.temperatures.find((temperature) => temperature.key === "gpu")?.celsius;
+  const hardwareSummary = [
+    panel.boardModel || "126f · Debian",
+    cpu == null ? undefined : `CPU ${cpu.toFixed(1)}°C`,
+    gpu == null ? undefined : `GPU ${gpu.toFixed(1)}°C`,
+  ].filter(Boolean).join(" · ");
   const resources = [
     { key: "cpu", label: "CPU", value: snapshot.host.cpuPercent, detail: `load ${snapshot.host.load1.toFixed(2)}` },
     { key: "memory", label: "内存", value: snapshot.host.memoryPercent, detail: `${formatBinaryBytes(snapshot.host.memoryUsedBytes)} / ${formatBinaryBytes(snapshot.host.memoryTotalBytes)}` },
@@ -111,7 +121,7 @@ function HardwareHostCard({ snapshot, stale, remoteHost }: {
 
   return (
     <section className="home-host-card home-hardware-card optical-glass">
-      <HostHeader snapshot={snapshot} stale={stale} hardware />
+      <HostHeader snapshot={snapshot} stale={stale} hardware hardwareSummary={hardwareSummary} />
 
       <section className="home-hardware-section" aria-labelledby="home-hardware-temperature-title">
         <div className="home-hardware-section__title" id="home-hardware-temperature-title">
