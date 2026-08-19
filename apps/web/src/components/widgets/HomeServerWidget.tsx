@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Icon } from "@iconify-icon/react";
 
 import useAuth from "@/context/useAuth";
+import HomeServerHostPanel from "./HomeServerHostPanel";
 import {
   fetchHomeServerStatus,
   fetchPublicHomeServerStatus,
@@ -11,7 +12,7 @@ import {
   type HomeServerService,
   type HomeServerSnapshot,
 } from "@/lib/homeServerClient";
-import { formatBinaryBytes, resolveHomeAccessStates, resolveHomeServerCardHref, resolveTelemetryFreshness } from "@/lib/homeServerPresentation";
+import { resolveHomeServerCardHref, resolveTelemetryFreshness } from "@/lib/homeServerPresentation";
 
 type HomeServerWidgetProps = {
   variant: "activity" | "services" | "host";
@@ -92,38 +93,6 @@ function ActivityPanel({ snapshot, stale }: { snapshot: HomeServerSnapshot; stal
   );
 }
 
-function HostPanel({ snapshot, stale }: { snapshot: HomeServerSnapshot; stale: boolean }) {
-  const remoteHost = snapshot.services.find((service) => service.id === "hkvps" || service.id === "remote-host");
-  const access = resolveHomeAccessStates(snapshot.services);
-  const metrics = [
-    { label: "CPU", value: snapshot.host.cpuPercent, detail: `load ${snapshot.host.load1.toFixed(2)}` },
-    { label: "RAM", value: snapshot.host.memoryPercent, detail: `${formatBinaryBytes(snapshot.host.memoryUsedBytes)} / ${formatBinaryBytes(snapshot.host.memoryTotalBytes)}` },
-    { label: "Disk", value: snapshot.host.diskPercent, detail: `${formatBinaryBytes(snapshot.host.diskUsedBytes)} / ${formatBinaryBytes(snapshot.host.diskTotalBytes)}` },
-  ];
-
-  return (
-    <div className="home-side-stack">
-      <section className="home-access-card optical-glass">
-        <header><Icon icon="fa6-solid:shield-halved" /> 访问链路</header>
-        <div><span><i className={`is-${access.tailscale}`} />Tailscale</span><span title="尚未配置独立探测"><i className={`is-${access.ipv6}`} />原生 IPv6</span><span><i className={`is-${access.nps}`} />NPS</span></div>
-      </section>
-      <section className="home-host-card optical-glass">
-        <header><span><strong>{snapshot.host.hostname}</strong><small>126f · Debian</small></span><span className={`home-live-pill${stale ? " is-stale" : ""}`}><i /> {stale ? "陈旧" : "在线"}</span></header>
-        <div className="home-host-metrics">
-          {metrics.map((metric) => (
-            <div key={metric.label} className="home-host-metric">
-              <span><strong>{metric.label}</strong><em>{Math.round(metric.value)}%</em></span>
-              <progress max="100" value={metric.value} />
-              <small>{metric.detail}</small>
-            </div>
-          ))}
-        </div>
-        <div className="home-peer-row"><Icon icon="fa6-solid:server" /><span><strong>{remoteHost?.name || "远端服务器"}</strong><small>{remoteHost?.detail || "远端链路"}</small></span><StatusDot state={remoteHost?.state || "unknown"} /></div>
-      </section>
-    </div>
-  );
-}
-
 export default function HomeServerWidget({ variant, className, readOnly = false }: HomeServerWidgetProps) {
   const { token, withAuth } = useAuth();
   const usePrivateStatus = shouldUsePrivateHomeServerStatus(token, readOnly);
@@ -158,7 +127,7 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
   const freshness = resolveTelemetryFreshness({ hasData: Boolean(query.data), isError: query.isError || query.isRefetchError });
   const stale = freshness === "stale";
   if (variant === "activity") return <div className={className}><ActivityPanel snapshot={query.data} stale={stale} /></div>;
-  if (variant === "host") return <div className={className}><HostPanel snapshot={query.data} stale={stale} /></div>;
+  if (variant === "host") return <div className={className}><HomeServerHostPanel snapshot={query.data} stale={stale} readOnly={readOnly} /></div>;
   const localServices = query.data.services.filter((service) => service.origin === "126f");
   const remoteServices = query.data.services.filter((service) => service.origin !== "126f");
   const remoteLabel = remoteServices.some((service) => service.origin === "hkvps") ? "hkvps" : "远端";

@@ -618,6 +618,158 @@ a.home-service-card:active {
 .home-host-metric progress::-moz-progress-bar { border-radius: 99px; background: #82e5d0; }
 .home-host-metric small { display: block; color: rgb(255 255 255 / 35%); font-size: .49rem; }
 
+.home-hardware-card {
+  padding: 14px;
+  background:
+    radial-gradient(circle at 12% 0%, rgb(220 245 255 / 11%), transparent 35%),
+    linear-gradient(145deg, rgb(219 241 252 / 9%), rgb(24 91 129 / 8%));
+}
+
+.home-hardware-card header > span:first-child {
+  min-width: 0;
+}
+
+.home-hardware-card header > span:first-child small {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-hardware-section {
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid rgb(221 245 255 / 10%);
+}
+
+.home-hardware-section__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: rgb(232 248 255 / 66%);
+  font-size: .5rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.home-hardware-section__title small {
+  color: rgb(232 248 255 / 34%);
+  font-size: .44rem;
+  font-weight: 550;
+  letter-spacing: .03em;
+  text-transform: none;
+}
+
+.home-hardware-temperatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.home-hardware-temperature {
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid rgb(220 244 255 / 13%);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgb(218 242 255 / 9%), rgb(26 91 131 / 9%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+
+.home-hardware-temperature small,
+.home-hardware-temperature strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-hardware-temperature small {
+  color: rgb(231 247 255 / 48%);
+  font-size: .49rem;
+}
+
+.home-hardware-temperature strong {
+  margin-top: 2px;
+  font-size: .9rem;
+  font-weight: 590;
+  letter-spacing: -.025em;
+}
+
+.home-hardware-fans {
+  display: grid;
+  gap: 6px;
+}
+
+.home-hardware-fan {
+  display: grid;
+  grid-template-columns: minmax(54px, auto) minmax(30px, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  color: rgb(231 247 255 / 56%);
+  font-size: .49rem;
+}
+
+.home-hardware-fan strong {
+  color: rgb(237 250 255 / 72%);
+  font-size: .5rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.home-hardware-fan progress {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 7%);
+}
+
+.home-hardware-fan progress::-webkit-progress-bar {
+  border-radius: 99px;
+  background: rgb(255 255 255 / 7%);
+}
+
+.home-hardware-fan progress::-webkit-progress-value {
+  border-radius: 99px;
+  background: linear-gradient(90deg, #78dff8, #82f0c5);
+  box-shadow: 0 0 8px rgb(116 235 226 / 42%);
+}
+
+.home-hardware-fan progress::-moz-progress-bar {
+  border-radius: 99px;
+  background: #82e5d0;
+}
+
+.home-hardware-empty {
+  margin: 0;
+  padding: 7px 8px;
+  border: 1px dashed rgb(220 244 255 / 12%);
+  border-radius: 11px;
+  color: rgb(230 246 255 / 42%);
+  font-size: .5rem;
+  text-align: center;
+}
+
+.home-hardware-resources {
+  margin: 0;
+}
+
+.home-hardware-resource.is-memory progress {
+  filter: drop-shadow(0 0 5px rgb(126 255 205 / 65%));
+  animation: home-memory-glow 2.8s ease-in-out infinite;
+}
+
+.home-hardware-card .home-peer-row {
+  margin-top: 11px;
+}
+
+@keyframes home-memory-glow {
+  50% { filter: drop-shadow(0 0 9px rgb(126 255 205 / 92%)); }
+}
+
 .home-server-loading.is-services {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -684,8 +836,13 @@ a.home-service-card:active {
   .ocean-switcher__menu { position: fixed; right: 10px; bottom: 62px; width: min(268px, calc(100vw - 20px)); }
 }
 
+@media (max-width: 420px) {
+  .home-hardware-temperatures { grid-template-columns: 1fr; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-service-card,
   .ocean-switcher__menu,
-  .home-server-loading__item { animation: none; transition: none; }
+  .home-server-loading__item,
+  .home-hardware-resource.is-memory progress { animation: none; transition: none; }
 }
