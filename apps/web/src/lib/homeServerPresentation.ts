@@ -55,6 +55,12 @@ export function resolveHomeServerCardHref(href: string | undefined, readOnly = f
   return readOnly ? undefined : href;
 }
 
+export function resolveResourcePressure(value: number) {
+  if (value >= 85) return "high" as const;
+  if (value >= 70) return "elevated" as const;
+  return "normal" as const;
+}
+
 function hottest(sensors: HardwareTemperature[]) {
   return sensors.reduce<HardwareTemperature | undefined>(
     (selected, sensor) => !selected || sensor.celsius > selected.celsius ? sensor : selected,

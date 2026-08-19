@@ -6,6 +6,7 @@ import {
   resolveHardwarePanel,
   resolveHomeAccessStates,
   resolveOceanBackground,
+  resolveResourcePressure,
   resolveTelemetryFreshness,
   shouldPlayOceanVideo,
 } from "./homeServerPresentation";
@@ -83,6 +84,13 @@ test("marks retained telemetry as stale after a refresh failure", () => {
 test("read-only service cards never become management links", () => {
   expect(resolveHomeServerCardHref("https://private.example.invalid", true)).toBeUndefined();
   expect(resolveHomeServerCardHref("https://private.example.invalid", false)).toBe("https://private.example.invalid");
+});
+
+test("warms resource bars at the approved 70 and 85 percent thresholds", () => {
+  expect(resolveResourcePressure(69.9)).toBe("normal");
+  expect(resolveResourcePressure(70)).toBe("elevated");
+  expect(resolveResourcePressure(84.9)).toBe("elevated");
+  expect(resolveResourcePressure(85)).toBe("high");
 });
 
 test("selects stable summary temperatures and safe fan labels for the private panel", () => {

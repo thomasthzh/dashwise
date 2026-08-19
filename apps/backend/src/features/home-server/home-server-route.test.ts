@@ -59,3 +59,20 @@ test("failed public telemetry responses cannot be cached", async () => {
   expect(response.status).toBe(503);
   expect(response.headers.get("Cache-Control")).toBe("no-store");
 });
+
+test("serves the fixed public weather card with shared cache headers", async () => {
+  const weather = { generatedAt: "now", locations: [] };
+  const route = createHomeServerRoute({
+    authorize: async () => {},
+    readStatus: async () => ({ generatedAt: "now", host: {}, services: [] } as never),
+    readWeather: async () => weather as never,
+  });
+
+  const response = await route.request("http://localhost/api/v1/home-server/weather", {
+    headers: { Authorization: "Bearer must-not-be-needed" },
+  });
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("Cache-Control")).toBe("public, max-age=300, stale-while-revalidate=600");
+  expect(await response.json()).toEqual(weather);
+});

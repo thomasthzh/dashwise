@@ -5,13 +5,16 @@ import { Icon } from "@iconify-icon/react";
 
 import useAuth from "@/context/useAuth";
 import HomeServerHostPanel from "./HomeServerHostPanel";
+import HomeWeatherCard from "./HomeWeatherCard";
 import {
+  fetchHomeWeather,
   fetchHomeServerStatus,
   fetchPublicHomeServerStatus,
   reclaimHomeServerMemory,
   resolveHomeServerWidgetPolicy,
   type HomeServerService,
   type HomeServerSnapshot,
+  type HomeWeatherSnapshot,
 } from "@/lib/homeServerClient";
 import { resolveHomeServerCardHref, resolveTelemetryFreshness } from "@/lib/homeServerPresentation";
 
@@ -27,6 +30,8 @@ function StatusDot({ state }: { state: HomeServerService["state"] }) {
 
 function ServiceCard({ service, readOnly }: { service: HomeServerService; readOnly: boolean }) {
   const href = resolveHomeServerCardHref(service.href, readOnly);
+  const className = `home-service-card optical-glass${service.state === "online" ? "" : " is-attention"}`;
+  const id = `home-service-${service.id}`;
   const content = (
     <>
       {href && <Icon icon="fa6-solid:arrow-up-right-from-square" className="home-service-card__open" />}
@@ -37,11 +42,12 @@ function ServiceCard({ service, readOnly }: { service: HomeServerService; readOn
     </>
   );
 
-  if (!href) return <article className="home-service-card optical-glass">{content}</article>;
+  if (!href) return <article id={id} className={className}>{content}</article>;
   const external = /^https?:\/\//i.test(href);
   return (
     <a
-      className="home-service-card optical-glass"
+      id={id}
+      className={className}
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
@@ -62,19 +68,26 @@ function LoadingPanel({ variant }: { variant: HomeServerWidgetProps["variant"] }
   );
 }
 
-function ActivityPanel({ snapshot, stale }: { snapshot: HomeServerSnapshot; stale: boolean }) {
-  const now = new Date();
+function ActivityPanel({
+  snapshot,
+  stale,
+  weather,
+  weatherUnavailable,
+  weatherStale,
+}: {
+  snapshot: HomeServerSnapshot;
+  stale: boolean;
+  weather?: HomeWeatherSnapshot;
+  weatherUnavailable: boolean;
+  weatherStale: boolean;
+}) {
   const healthy = snapshot.services.filter((service) => service.state === "online").length;
   const minecraft = snapshot.services.find((service) => service.id === "minecraft");
   const issues = snapshot.services.filter((service) => service.state !== "online");
 
   return (
     <div className="home-side-stack">
-      <section className="home-date-card optical-glass">
-        <span>{new Intl.DateTimeFormat("zh-HK", { weekday: "long" }).format(now)}</span>
-        <strong>{now.getDate()}</strong>
-        <small>{new Intl.DateTimeFormat("zh-HK", { year: "numeric", month: "long" }).format(now)}</small>
-      </section>
+      <HomeWeatherCard weather={weather} unavailable={weatherUnavailable} stale={weatherStale} />
       <section className="home-activity-card optical-glass">
         <header><span>实时状态</span><span className={`home-live-pill${stale ? " is-stale" : ""}`}><i /> {stale ? "陈旧" : "实时"}</span></header>
         <div className="home-activity-row">
@@ -85,10 +98,18 @@ function ActivityPanel({ snapshot, stale }: { snapshot: HomeServerSnapshot; stal
           <Icon icon="fa6-solid:cube" />
           <span><strong>{minecraft?.metric || "—"}</strong><small>Minecraft 玩家</small></span>
         </div>
-        <div className="home-activity-row">
-          <Icon icon={issues.length ? "fa6-solid:triangle-exclamation" : "fa6-solid:circle-check"} />
-          <span><strong>{issues.length ? `${issues.length} 项需留意` : "全部正常"}</strong><small>{issues[0]?.name || "最近一次探测通过"}</small></span>
-        </div>
+        {issues[0] ? (
+          <a className="home-activity-row is-action" href={`#home-service-${issues[0].id}`}>
+            <Icon icon="fa6-solid:triangle-exclamation" />
+            <span><strong>{issues.length} 项需留意</strong><small>{issues[0].name} · 点击定位</small></span>
+            <Icon icon="fa6-solid:arrow-down" className="home-activity-row__action" />
+          </a>
+        ) : (
+          <div className="home-activity-row">
+            <Icon icon="fa6-solid:circle-check" />
+            <span><strong>全部正常</strong><small>最近一次探测通过</small></span>
+          </div>
+        )}
       </section>
     </div>
   );
@@ -104,6 +125,14 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
       : fetchPublicHomeServerStatus(),
     refetchInterval: 10_000,
     staleTime: 7_000,
+    retry: 1,
+  });
+  const weatherQuery = useQuery({
+    queryKey: ["126f", "dual-city-weather"],
+    queryFn: () => fetchHomeWeather(),
+    enabled: variant === "activity",
+    refetchInterval: 600_000,
+    staleTime: 540_000,
     retry: 1,
   });
   const memoryReclaim = useMutation({
@@ -131,7 +160,17 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
 
   const freshness = resolveTelemetryFreshness({ hasData: Boolean(query.data), isError: query.isError || query.isRefetchError });
   const stale = freshness === "stale";
-  if (variant === "activity") return <div className={className}><ActivityPanel snapshot={query.data} stale={stale} /></div>;
+  if (variant === "activity") return (
+    <div className={className}>
+      <ActivityPanel
+        snapshot={query.data}
+        stale={stale}
+        weather={weatherQuery.data}
+        weatherUnavailable={weatherQuery.isError && !weatherQuery.data}
+        weatherStale={Boolean(weatherQuery.data) && (weatherQuery.isError || weatherQuery.isRefetchError)}
+      />
+    </div>
+  );
   if (variant === "host") return (
     <div className={className}>
       <HomeServerHostPanel
@@ -151,7 +190,7 @@ export default function HomeServerWidget({ variant, className, readOnly = false 
   return (
     <section className={`home-services ${className || ""}`}>
       <header className="home-services__header">
-        <span><strong>服务矩阵</strong><small>按两台服务器实际项目自动更新</small></span>
+        <strong>服务矩阵</strong>
         <span className={`home-live-pill${stale ? " is-stale" : ""}`}><i /> {stale ? "陈旧" : "10s"}</span>
       </header>
       <div className="home-services__group">

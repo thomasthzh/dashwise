@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import {
+  fetchHomeWeather,
   fetchHomeServerStatus,
   fetchPublicHomeServerStatus,
   resolveHomeServerWidgetPolicy,
@@ -78,6 +79,25 @@ test("read-only dashboards never select the private status client", () => {
   expect(shouldUsePrivateHomeServerStatus("stale-token", true)).toBe(false);
   expect(shouldUsePrivateHomeServerStatus("valid-token", false)).toBe(true);
   expect(shouldUsePrivateHomeServerStatus(null, false)).toBe(false);
+});
+
+test("fetches public dual-city weather without transmitting authentication", async () => {
+  let request: Request | undefined;
+  let requestInit: RequestInit | undefined;
+  const weather = { generatedAt: "now", locations: [] };
+  const result = await fetchHomeWeather({
+    baseUrl: "https://homepage.example/",
+    fetch: async (input, init) => {
+      requestInit = init;
+      request = new Request(input, init);
+      return Response.json(weather);
+    },
+  });
+
+  expect(request?.url).toBe("https://homepage.example/api/v1/home-server/weather");
+  expect(request?.headers.get("Authorization")).toBeNull();
+  expect(requestInit?.credentials).toBe("omit");
+  expect(result).toEqual(weather);
 });
 
 test("anonymous widgets remain read-only even if a public response is poisoned", () => {

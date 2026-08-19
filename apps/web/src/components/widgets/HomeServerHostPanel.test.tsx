@@ -91,3 +91,20 @@ test("states the exact limitation when the kernel exposes no fan inputs", () => 
   expect(markup).toContain("陈旧");
   expect(markup).not.toContain("0 RPM");
 });
+
+test("marks elevated and high resource pressure without a red state", () => {
+  const markup = renderToStaticMarkup(
+    <HomeServerHostPanel
+      snapshot={{
+        ...snapshot,
+        host: { ...snapshot.host, memoryPercent: 76, diskPercent: 91 },
+      }}
+      stale={false}
+      readOnly={false}
+    />,
+  );
+
+  expect(markup).toContain("is-pressure-elevated");
+  expect(markup).toContain("is-pressure-high");
+  expect(markup).not.toContain("is-pressure-critical");
+});

@@ -507,7 +507,7 @@ export default function DashboardLayoutTemplate({
         entryConfig: Record<string, any> | null | undefined,
     ) => {
         const cfg = entryConfig ?? {};
-        const wrapperClass = ["mb-3", cfg.className].filter(Boolean).join(
+        const wrapperClass = ["dashboard-widget-shell", "mb-3", cfg.className].filter(Boolean).join(
             " ",
         );
         const baseKey = `${columnName}-${entryKey}`;
@@ -690,7 +690,7 @@ export default function DashboardLayoutTemplate({
 
     return (
         <>
-            <div className="grid grid-rows-[minmax(0,1fr)_36px] h-dvh pt-5 p-2 overflow-x-hidden text-(--surface-foreground) bg-(--surface)">
+            <div className={`grid grid-rows-[minmax(0,1fr)_36px] h-dvh pt-5 p-2 overflow-x-hidden text-(--surface-foreground) bg-(--surface)${pageName === "home" ? " home-dashboard-layout" : ""}`}>
                 <main
                     id="page-content-container"
                     ref={containerRef}

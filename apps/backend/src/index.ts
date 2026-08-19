@@ -22,6 +22,7 @@ import { createHomeServerRoute } from "./features/home-server/home-server-route"
 import { createHomeServerStatusService } from "./features/home-server/home-server-service";
 import { defaultHomeServerRuntime } from "./features/home-server/home-server-runtime";
 import { collectHomeServerTelemetry } from "./features/home-server/home-server-status";
+import { createHomeWeatherService } from "./features/home-server/home-server-weather";
 
 const app = new Hono();
 const homeServerStatusService = createHomeServerStatusService({
@@ -30,11 +31,13 @@ const homeServerStatusService = createHomeServerStatusService({
   ttlMs: 8_000,
   urls: { ...config.HOME_SERVER_URLS },
 });
+const homeWeatherService = createHomeWeatherService();
 const homeServerRoute = createHomeServerRoute({
   authorize: async (token) => {
     await requireAuth({ token });
   },
   readStatus: () => homeServerStatusService.read(),
+  readWeather: () => homeWeatherService.read(),
 });
 const devAutoLoginEmail = "testenv@dashwise.local";
 const devAutoLoginPassword = "DashwiseTestenv123";

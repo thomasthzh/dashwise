@@ -10,6 +10,7 @@ export type {
   HardwareFan,
   HardwareTelemetry,
   HardwareTemperature,
+  HomeWeatherSnapshot,
   HomeServerService,
   HomeServerServiceState,
   HomeServerSnapshot,
@@ -64,6 +65,22 @@ export async function fetchPublicHomeServerStatus(options?: {
     throw new Error("error" in payload && payload.error ? payload.error : "Status collection failed");
   }
   return payload as PublicHomeServerSnapshot;
+}
+
+export async function fetchHomeWeather(options?: {
+  baseUrl?: string;
+  fetch?: FetchLike;
+}): Promise<HomeWeatherSnapshot> {
+  const baseUrl = options?.baseUrl || (typeof window === "undefined" ? "http://127.0.0.1" : window.location.origin);
+  const fetchImpl = options?.fetch || fetch;
+  const response = await fetchImpl(new URL("/api/v1/home-server/weather", baseUrl), {
+    credentials: "omit",
+  });
+  const payload = await response.json() as HomeWeatherSnapshot | { error?: string };
+  if (!response.ok) {
+    throw new Error("error" in payload && payload.error ? payload.error : "Weather collection failed");
+  }
+  return payload as HomeWeatherSnapshot;
 }
 
 export async function reclaimHomeServerMemory(

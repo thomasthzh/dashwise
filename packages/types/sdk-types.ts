@@ -288,3 +288,26 @@ export type PublicHomeServerService = Omit<HomeServerService, "origin" | "href">
 export type PublicHomeServerSnapshot = Omit<HomeServerSnapshot, "hardware" | "services"> & {
   services: PublicHomeServerService[];
 };
+
+export type HomeWeatherForecastPoint = {
+  time: string;
+  temperatureC: number;
+  weatherCode: number;
+  precipitationProbability: number;
+};
+
+export type HomeWeatherLocation = {
+  id: "longgang" | "songshan-lake";
+  name: string;
+  temperatureC: number;
+  weatherCode: number;
+  highC: number;
+  lowC: number;
+  precipitationProbability: number;
+  forecast: HomeWeatherForecastPoint[];
+};
+
+export type HomeWeatherSnapshot = {
+  generatedAt: string;
+  locations: HomeWeatherLocation[];
+};

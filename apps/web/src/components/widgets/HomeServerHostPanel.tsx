@@ -5,6 +5,7 @@ import {
   formatBinaryBytes,
   resolveHardwarePanel,
   resolveHomeAccessStates,
+  resolveResourcePressure,
 } from "@/lib/homeServerPresentation";
 
 type HomeServerHostPanelProps = {
@@ -87,7 +88,7 @@ function CompactHostCard({ snapshot, stale, remoteHost }: {
       <HostHeader snapshot={snapshot} stale={stale} />
       <div className="home-host-metrics">
         {metrics.map((metric) => (
-          <div key={metric.label} className="home-host-metric">
+          <div key={metric.label} className={`home-host-metric is-pressure-${resolveResourcePressure(metric.value)}`}>
             <span><strong>{metric.label}</strong><em>{Math.round(metric.value)}%</em></span>
             <progress max="100" value={metric.value} />
             <small>{metric.detail}</small>
@@ -200,7 +201,10 @@ function HardwareHostCard({
         ) : null}
         <div className="home-host-metrics home-hardware-resources">
           {resources.map((resource) => (
-            <div key={resource.key} className={`home-host-metric home-hardware-resource is-${resource.key}`}>
+            <div
+              key={resource.key}
+              className={`home-host-metric home-hardware-resource is-${resource.key} is-pressure-${resolveResourcePressure(resource.value)}`}
+            >
               <span><strong>{resource.label}</strong><em>{Math.round(resource.value)}%</em></span>
               <progress max="100" value={resource.value} />
               <small>{resource.detail}</small>

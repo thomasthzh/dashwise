@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 
 import { Hono } from "hono";
+import type { HomeWeatherSnapshot } from "@dashwise/types/sdk";
 
 import { toPublicHomeServerSnapshot, type HomeServerSnapshot } from "./home-server-status";
 
@@ -42,6 +43,7 @@ async function reclaimLinuxMemory(): Promise<MemoryReclaimResult> {
 export function createHomeServerRoute(options: {
   authorize: (token: string | null) => Promise<void>;
   readStatus: () => Promise<HomeServerSnapshot>;
+  readWeather?: () => Promise<HomeWeatherSnapshot>;
   reclaimMemory?: () => Promise<MemoryReclaimResult>;
 }) {
   const route = new Hono();
@@ -70,6 +72,18 @@ export function createHomeServerRoute(options: {
       return context.json(await options.readStatus());
     } catch {
       return context.json({ error: "Status collection failed" }, 503);
+    }
+  });
+
+  route.get("/api/v1/home-server/weather", async (context) => {
+    try {
+      if (!options.readWeather) throw new Error("Weather is not configured");
+      const weather = await options.readWeather();
+      context.header("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+      return context.json(weather);
+    } catch {
+      context.header("Cache-Control", "no-store");
+      return context.json({ error: "Weather collection failed" }, 503);
     }
   });
 
