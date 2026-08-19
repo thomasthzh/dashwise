@@ -139,6 +139,13 @@ describe("126f home server runtime parsers", () => {
           : [{ times: { idle: 1_250, user: 2_750, sys: 1_000, nice: 0, irq: 0 } }];
       },
       statfs: async () => ({ bsize: 1, blocks: 1_000, bfree: 400 }),
+      readHardware: async () => ({
+        boardModel: "MS-7D99",
+        temperatures: [{ id: "cpu", source: "coretemp", label: "Package id 0", celsius: 26 }],
+        fans: [{ id: "fan", source: "nct6687", label: "Fan 1", rpm: 1264 }],
+        swapUsedBytes: 10,
+        swapTotalBytes: 100,
+      }),
       sleep: async () => undefined,
       run: async (command, args) => ({
         exitCode: command === "tailscale" || (command === "systemctl" && args.includes("mcsm-web")) ? 0 : 1,
@@ -169,6 +176,12 @@ describe("126f home server runtime parsers", () => {
       diskTotalBytes: 1_000,
       load1: 1.5,
     });
+    await expect(runtime.readHardware()).resolves.toMatchObject({
+      boardModel: "MS-7D99",
+      fans: [{ rpm: 1264 }],
+      swapUsedBytes: 10,
+      swapTotalBytes: 100,
+    });
     await expect(runtime.isUnitActive("mcsm-web")).resolves.toBe(true);
     await expect(runtime.isUnitActive("npc")).resolves.toBe(false);
     await expect(runtime.isHttpHealthy("http://127.0.0.1:8091/health")).resolves.toBe(true);
@@ -189,6 +202,7 @@ describe("126f home server runtime parsers", () => {
     for (const method of [
       "now",
       "readHost",
+      "readHardware",
       "isUnitActive",
       "isHttpHealthy",
       "readMinecraft",

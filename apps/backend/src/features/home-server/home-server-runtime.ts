@@ -2,6 +2,10 @@ import { createConnection } from "node:net";
 import { statfs } from "node:fs/promises";
 import { cpus, freemem, hostname, loadavg, totalmem, uptime } from "node:os";
 
+import {
+  readLinuxHardwareTelemetry,
+  type HardwareTelemetry,
+} from "./home-server-hardware";
 import type {
   HkvpsAppId,
   HkvpsAppsTelemetry,
@@ -19,6 +23,7 @@ export type HomeServerRuntimeDependencies = {
   loadavg: () => number[];
   cpus: () => Array<{ times: { idle: number; user: number; sys: number; nice: number; irq: number } }>;
   statfs: (path: string) => Promise<{ bsize: number; blocks: number; bfree: number }>;
+  readHardware: () => Promise<HardwareTelemetry>;
   sleep: (milliseconds: number) => Promise<unknown>;
   run: (command: string, args: string[]) => Promise<{ exitCode: number; stdout: string }>;
   fetch: (url: string) => Promise<{ ok: boolean }>;
@@ -265,6 +270,18 @@ export function createHomeServerRuntime(
         load1: dependencies.loadavg()[0] ?? 0,
       };
     },
+    readHardware: async () => {
+      try {
+        return await dependencies.readHardware();
+      } catch {
+        return {
+          temperatures: [],
+          fans: [],
+          swapUsedBytes: 0,
+          swapTotalBytes: 0,
+        };
+      }
+    },
     isUnitActive: async (unit) => {
       try {
         return (await dependencies.run("systemctl", ["is-active", "--quiet", unit])).exitCode === 0;
@@ -335,6 +352,7 @@ export const defaultHomeServerRuntime = createHomeServerRuntime({
   loadavg,
   cpus,
   statfs,
+  readHardware: readLinuxHardwareTelemetry,
   sleep: (milliseconds) => Bun.sleep(milliseconds),
   run: runCommand,
   fetch: (url) => fetch(url, {
