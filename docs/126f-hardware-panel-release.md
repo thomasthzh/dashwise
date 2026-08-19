@@ -7,3 +7,4 @@ This release adds a private, authenticated hardware overview to the existing 126
 - Missing sensors are omitted instead of replaced with fabricated values.
 - The anonymous status response and read-only dashboard never include the hardware payload.
 - The public host card keeps the compact resource summary; the expanded hardware layout is available only after authentication.
+- Production packaging installs the same verified Vite entrypoint into the backend runtime's `dist/public` directory.
