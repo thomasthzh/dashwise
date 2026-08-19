@@ -3,9 +3,9 @@ import type {
   HardwareFan,
   HardwareTelemetry,
   HardwareTemperature,
-} from "@dashwise/api-types";
+} from "@dashwise/types/sdk";
 
-export type { HardwareFan, HardwareTelemetry, HardwareTemperature } from "@dashwise/api-types";
+export type { HardwareFan, HardwareTelemetry, HardwareTemperature } from "@dashwise/types/sdk";
 
 export type HardwareFs = {
   list: (path: string) => Promise<string[]>;

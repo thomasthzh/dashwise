@@ -5,7 +5,7 @@ import type {
   HomeServerSnapshot as ContractHomeServerSnapshot,
   PublicHomeServerService as ContractPublicHomeServerService,
   PublicHomeServerSnapshot as ContractPublicHomeServerSnapshot,
-} from "@dashwise/api-types";
+} from "@dashwise/types/sdk";
 
 export type ServiceState = HomeServerServiceState;
 

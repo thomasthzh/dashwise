@@ -1,5 +1,8 @@
-import type { ActionAuth } from "@dashwise/types/sdk";
-import type { HomeServerSnapshot, PublicHomeServerSnapshot } from "@dashwise/api-types";
+import type {
+  ActionAuth,
+  HomeServerSnapshot,
+  PublicHomeServerSnapshot,
+} from "@dashwise/types/sdk";
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
@@ -11,7 +14,7 @@ export type {
   HomeServerServiceState,
   HomeServerSnapshot,
   PublicHomeServerSnapshot,
-} from "@dashwise/api-types";
+} from "@dashwise/types/sdk";
 
 export function shouldUsePrivateHomeServerStatus(token: string | null, readOnly = false) {
   return Boolean(token) && !readOnly;

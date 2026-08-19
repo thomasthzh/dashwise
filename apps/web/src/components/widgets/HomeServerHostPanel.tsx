@@ -108,7 +108,8 @@ function HardwareHostCard({ snapshot, stale, remoteHost }: {
   const cpu = panel.temperatures.find((temperature) => temperature.key === "cpu")?.celsius;
   const gpu = panel.temperatures.find((temperature) => temperature.key === "gpu")?.celsius;
   const hardwareSummary = [
-    panel.boardModel || "126f · Debian",
+    panel.boardModel || "126f",
+    "Debian",
     cpu == null ? undefined : `CPU ${cpu.toFixed(1)}°C`,
     gpu == null ? undefined : `GPU ${gpu.toFixed(1)}°C`,
   ].filter(Boolean).join(" · ");

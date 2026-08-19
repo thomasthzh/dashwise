@@ -44,7 +44,7 @@ test("renders the approved integrated hardware panel for administrators", () => 
 
   expect(markup).toContain("硬件状态");
   expect(markup).toContain("PRIVATE-MS-7D99");
-  expect(markup).toContain("CPU 26.0°C · GPU 28.0°C");
+  expect(markup).toContain("Debian · CPU 26.0°C · GPU 28.0°C");
   expect(markup).toContain("CPU");
   expect(markup).toContain("GPU");
   expect(markup).toContain("主板 / ACPI");
