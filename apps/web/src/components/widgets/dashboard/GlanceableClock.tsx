@@ -1,12 +1,11 @@
 // components/widgets/dashboard/GlanceableClock.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import ClockWidget from "../ClockWidget";
 import useAuth from "@/context/useAuth";
 import { getConsumerDataAction } from '@/lib/apiClient';
 import { updatePageIntegrationConsumerCache } from "@/lib/pageIntegrationDataCache";
-import GlanceableComponent from "@dashwise/integrationskit/Glanceable";
 import { usePageConfig } from "@/hooks/usePageConfig";
 import type { WidgetItemProps } from "../Widget";
 import { useLocalization } from "@/context/LocalizationContext";
@@ -14,7 +13,14 @@ import { useActivity } from "@/context/ActivityContext";
 import { Bell, CalendarDays } from "lucide-react";
 import { readPageIntegrationConsumer } from "@/lib/pageIntegrationDataCache";
 import type { ClockAppearance } from "../../settings/ClockFontSelectionCarousel";
-import { shouldUseBackendGlanceable, shouldUseProtectedGlanceableCache } from "@/lib/glanceableAccess";
+import {
+  shouldUseBackendGlanceable,
+  shouldUseLightweightGlanceable,
+  shouldUseProtectedGlanceableCache,
+} from "@/lib/glanceableAccess";
+import LocalGlanceable from "./LocalGlanceable";
+
+const GlanceableComponent = lazy(() => import("@dashwise/integrationskit/Glanceable"));
 
 type ResolvedGlanceablePayload = {
   consumer: "glanceable";
@@ -279,17 +285,19 @@ function ResolvedGlanceable({
 
   if (hasBackendBlueprint) {
     return (
-      <GlanceableComponent
-        glanceableJSON={blueprint?.glanceableJSON}
-        data={resolved?.data}
-        resolved={{
-          text: blueprint?.text ?? "",
-          icon: blueprint?.icon,
-        }}
-        params={params}
+      <Suspense fallback={<GlanceableLoadingState className={className} />}>
+        <GlanceableComponent
+          glanceableJSON={blueprint?.glanceableJSON}
+          data={resolved?.data}
+          resolved={{
+            text: blueprint?.text ?? "",
+            icon: blueprint?.icon,
+          }}
+          params={params}
           formatters={formatters}
-        className={className}
-      />
+          className={className}
+        />
+      </Suspense>
     );
   }
 
@@ -301,7 +309,19 @@ function ResolvedGlanceable({
     );
   }
 
-  return <GlanceableComponent type={type} params={params} formatters={formatters} className={className} />;
+  if (shouldUseLightweightGlanceable(type)) {
+    return <LocalGlanceable type={type} params={params} formatters={formatters} className={className} />;
+  }
+
+  return null;
+}
+
+function GlanceableLoadingState({ className }: { className?: string }) {
+  return (
+    <div className={`rounded-md px-2 py-1 text-xs text-white/60 ${className ?? ""}`}>
+      Loading...
+    </div>
+  );
 }
 
 function LatestActivitiesGlanceable({

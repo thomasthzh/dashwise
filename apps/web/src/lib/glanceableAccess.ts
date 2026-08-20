@@ -18,3 +18,7 @@ export function shouldUseBackendGlanceable(type: string, readOnly = false) {
 export function shouldUseProtectedGlanceableCache(readOnly = false) {
   return !readOnly;
 }
+
+export function shouldUseLightweightGlanceable(type: string) {
+  return LOCAL_ONLY_GLANCEABLES.has(type);
+}
