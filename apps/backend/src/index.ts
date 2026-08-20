@@ -32,6 +32,7 @@ const homeServerStatusService = createHomeServerStatusService({
   ttlMs: 8_000,
   urls: { ...config.HOME_SERVER_URLS },
 });
+void homeServerStatusService.read().catch(() => undefined);
 const homeWeatherService = createHomeWeatherService();
 const homeServerRoute = createHomeServerRoute({
   authorize: async (token) => {
