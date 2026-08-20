@@ -23,6 +23,7 @@ import { createHomeServerStatusService } from "./features/home-server/home-serve
 import { defaultHomeServerRuntime } from "./features/home-server/home-server-runtime";
 import { collectHomeServerTelemetry } from "./features/home-server/home-server-status";
 import { createHomeWeatherService } from "./features/home-server/home-server-weather";
+import { resolveStaticResponseHeaders } from "./features/static-assets/static-asset-cache";
 
 const app = new Hono();
 const homeServerStatusService = createHomeServerStatusService({
@@ -363,7 +364,6 @@ async function servePublicFile(requestPath: string) {
   }
 
   const extension = assetPath.slice(assetPath.lastIndexOf(".")).toLowerCase();
-  const isFont = extension === ".ttf" || extension === ".woff" || extension === ".woff2";
   const contentType = {
     ".css": "text/css; charset=utf-8",
     ".html": "text/html; charset=utf-8",
@@ -387,10 +387,7 @@ async function servePublicFile(requestPath: string) {
   }[extension] || "application/octet-stream";
 
   return new Response(assetFile, {
-    headers: {
-      "Content-Type": contentType,
-      ...(isFont ? { "Cache-Control": "public, max-age=31536000, immutable" } : {}),
-    },
+    headers: resolveStaticResponseHeaders(requestPath, contentType),
   });
 }
 
@@ -427,7 +424,9 @@ app.get("*", async () => {
   const indexFile = Bun.file(join(publicDir, "index.html"));
 
   if (await indexFile.exists()) {
-    return new Response(indexFile);
+    return new Response(indexFile, {
+      headers: resolveStaticResponseHeaders("/index.html", "text/html; charset=utf-8"),
+    });
   }
 
   return new Response("Backend running. Frontend not built.", {
