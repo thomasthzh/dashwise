@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { validateAuthTokenAction } from '@/lib/apiClient';
@@ -10,6 +10,7 @@ import { LocalizationProvider } from "@/context/LocalizationContext";
 import { ActivityProvider } from "@/context/ActivityContext";
 import { normalizeWallpaperFilters } from "./settings/wallpaperFilterDefaults";
 import SearchBar from "./widgets/SearchBar";
+import { shouldValidateAuthToken } from "@/lib/authValidationPolicy";
 
 type AuthWrapperProps = {
   children: ReactNode;
@@ -20,17 +21,13 @@ type ThemeMode = "light" | "dark" | "system";
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   const navigate = useNavigate();
   const { token, user, setAuth, logout } = useAuth();
-  const [isMounted, setIsMounted] = useState(false);
+  const validatedReplacementTokenRef = useRef<string | null>(null);
   const authValidation = useQuery({
     queryKey: ["auth", "validate", token],
-    enabled: Boolean(token),
+    enabled: shouldValidateAuthToken(token, validatedReplacementTokenRef.current),
     retry: false,
     queryFn: () => validateAuthTokenAction({ token }),
   });
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -40,7 +37,9 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   useEffect(() => {
     if (authValidation.data?.user) {
-      setAuth(authValidation.data.user, authValidation.data.token ?? token);
+      const replacementToken = authValidation.data.token ?? token;
+      validatedReplacementTokenRef.current = replacementToken;
+      setAuth(authValidation.data.user, replacementToken);
     }
   }, [authValidation.data, setAuth, token]);
 
@@ -155,17 +154,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       root.style.removeProperty("--ocean-brightness");
     };
   }, [appliedBrightness, blur]);
-
-
-  if (!isMounted) {
-    return (
-      <LocalizationProvider>
-        <ActivityProvider>
-          <div className={cn("min-h-screen overflow-hidden")}>{children}</div>
-        </ActivityProvider>
-      </LocalizationProvider>
-    );
-  }
 
   if (!token) {
     return null;
