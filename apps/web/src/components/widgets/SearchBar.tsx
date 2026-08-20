@@ -1,11 +1,15 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import useAuth, { COMMAND_BAR_OPEN_EVENT } from "@/context/useAuth";
-import CommandBar from './CommandBar';
 import { getSearchItemsAction } from '@/lib/apiClient';
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { queryKeys } from "@/lib/queryClient";
-import { shouldEnableProtectedSearch } from "@/lib/publicInteractionAccess";
+import {
+  shouldEnableProtectedSearch,
+  shouldRenderCommandBar,
+} from "@/lib/publicInteractionAccess";
+
+const CommandBar = lazy(() => import('./CommandBar'));
 
 type SearchBarProps = {
   useRedirect: boolean;
@@ -132,7 +136,16 @@ export default function SearchBar({
         </div>
       )}
 
-      {!disabled && <CommandBar open={open} setOpen={setOpen} searchItems={searchItems} config={user?.searchPreferences ?? {}}/>}
+      {shouldRenderCommandBar(open, disabled) && (
+        <Suspense fallback={null}>
+          <CommandBar
+            open={open}
+            setOpen={setOpen}
+            searchItems={searchItems}
+            config={user?.searchPreferences ?? {}}
+          />
+        </Suspense>
+      )}
     </>
   );
 }
