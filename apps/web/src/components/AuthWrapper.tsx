@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { validateAuthTokenAction } from '@/lib/apiClient';
 import useAuth from "@/context/useAuth";
 import { cn } from "@/lib/utils";
-import { fetchWallpaperBlob } from "@/lib/apiClient";
 import { LocalizationProvider } from "@/context/LocalizationContext";
 import { ActivityProvider } from "@/context/ActivityContext";
 import { normalizeWallpaperFilters } from "./settings/wallpaperFilterDefaults";
@@ -89,52 +88,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     const accentColor = user?.appearancePreferences?.accentColor || "#4f46e5";
     document.documentElement.style.setProperty("--primary", accentColor);
   }, [user]);
-
-  // --- Background image --- MOVED UP before any conditional returns
-  useEffect(() => {
-    if (!user?.appearancePreferences) return;
-
-    const rawImgUrl = user.appearancePreferences.backgroundImageUrl || "/dashboard-wallpaper.png";
-    const imgUrl = rawImgUrl.startsWith("/assets/") ? rawImgUrl.replace(/^\/assets\//, "/") : rawImgUrl;
-    const tokenToUse = token;
-    let revokeUrl: string | null = null;
-
-    const loadBackground = async () => {
-      try {
-        let finalUrl = imgUrl;
-        if (
-          imgUrl.startsWith("/api/v1/wallpapers") ||
-          imgUrl.includes(window.location.host)
-        ) {
-          if (!tokenToUse) return;
-          const blob = await fetchWallpaperBlob(imgUrl, tokenToUse);
-          finalUrl = URL.createObjectURL(blob);
-          revokeUrl = finalUrl;
-        }
-
-        const img = new Image();
-        img.src = finalUrl;
-        img.onload = () => {
-          document.body.style.backgroundImage = `url('${finalUrl}')`;
-          document.body.style.backgroundSize = "cover";
-          document.body.style.backgroundRepeat = "no-repeat";
-          document.body.style.backgroundPosition = "center";
-        };
-      } catch (err) {
-        console.error("Error loading background:", err);
-      }
-    };
-
-    loadBackground();
-
-    return () => {
-      document.body.style.backgroundImage = "";
-      document.body.style.backgroundSize = "";
-      document.body.style.backgroundRepeat = "";
-      document.body.style.backgroundPosition = "";
-      if (revokeUrl) URL.revokeObjectURL(revokeUrl);
-    };
-  }, [user, token]);
 
   const wallpaperFilters = normalizeWallpaperFilters(user?.appearancePreferences?.wallpaperFilters);
   const blur = wallpaperFilters.blur;

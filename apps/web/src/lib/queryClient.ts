@@ -44,9 +44,9 @@ export const queryKeys = {
     history: (monitorId: string, range?: string) => ["monitoring", "history", monitorId, range ?? null] as const,
     status: (monitorId: string) => ["monitoring", "status", monitorId] as const,
   },
-  // Scope authenticated resources to the active session so a user switch never
+  // Scope authenticated resources to the active identity so a user switch never
   // renders another user's cached data before its first refetch completes.
-  pageConfig: (token: string | null, pageName: string) => ["page-config", token, pageName] as const,
+  pageConfig: (authScope: string | null, pageName: string) => ["page-config", authScope, pageName] as const,
   news: {
     subscriptions: (token: string | null) => ["news", token, "subscriptions"] as const,
     feeds: (token: string | null) => ["news", token, "feeds"] as const,

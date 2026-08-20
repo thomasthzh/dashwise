@@ -26,6 +26,9 @@ test("authenticated shell uses one stable provider tree", () => {
   );
 
   expect(source).not.toContain("isMounted");
+  expect(source).not.toContain("fetchWallpaperBlob");
+  expect(source).not.toContain("new Image()");
+  expect(source).not.toContain("document.body.style.backgroundImage");
   expect(source.match(/<LocalizationProvider>/g)?.length).toBe(1);
   expect(source).toContain("shouldValidateAuthToken(");
 });

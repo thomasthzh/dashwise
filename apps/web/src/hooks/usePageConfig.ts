@@ -3,6 +3,7 @@
 import { getPageConfigAction } from '@/lib/apiClient';
 import useAuth from "@/context/useAuth";
 import { queryKeys } from "@/lib/queryClient";
+import { resolvePageConfigAuthScope } from "@/lib/pageConfigQueryPolicy";
 import type { PageConfig } from "@dashwise/types/sdk";
 import { useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,14 +22,18 @@ type UsePageConfigOptions = {
 
 export function usePageConfig(options?: UsePageConfigOptions) {
   const pathname = useLocation().pathname;
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const resolvedPageName = useMemo(
     () => options?.pageName ?? resolveRequestedPageName(pathname),
     [options?.pageName, pathname]
   );
 
   const queryClient = useQueryClient();
-  const queryKey = useMemo(() => queryKeys.pageConfig(token, resolvedPageName), [resolvedPageName, token]);
+  const authScope = resolvePageConfigAuthScope(token, user?.id);
+  const queryKey = useMemo(
+    () => queryKeys.pageConfig(authScope, resolvedPageName),
+    [authScope, resolvedPageName],
+  );
   const pageConfigQuery = useQuery({
     queryKey,
     enabled: Boolean(token),
